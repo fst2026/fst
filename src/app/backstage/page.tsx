@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { auth, isOAuthConfigured } from "@/auth";
+import { auth, authConfigurationIssue, isOAuthConfigured } from "@/auth";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import { AdminLogin } from "@/components/AdminLogin";
 import { getSubmissions } from "@/lib/db";
@@ -20,7 +20,7 @@ export default async function AdminPage() {
   const userEmail = session?.user?.email;
   const isAdmin = isAdminEmail(userEmail);
 
-  if (!isAdmin) return <AdminLogin oauthConfigured={isOAuthConfigured} />;
+  if (!isAdmin) return <AdminLogin oauthConfigured={isOAuthConfigured} authConfigIssue={authConfigurationIssue} />;
 
   const canEditSettings = isSuperAdminEmail(userEmail);
   const [submissions, settings] = await Promise.all([getSubmissions(), getCachedSettings()]);

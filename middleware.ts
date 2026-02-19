@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { auth, isOAuthConfigured } from "@/auth";
+import { auth, authConfigurationIssue, isOAuthConfigured } from "@/auth";
 import { isAdminEmail } from "@/lib/admin-auth";
 
 function isProtectedPath(pathname: string) {
@@ -22,7 +22,13 @@ export default auth((request: RequestWithAuth) => {
 
   if (!isOAuthConfigured) {
     if (request.nextUrl.pathname.startsWith("/api/")) {
-      return NextResponse.json({ message: "Admin OAuth is not configured." }, { status: 503 });
+      return NextResponse.json(
+        {
+          message: "Admin OAuth is not configured.",
+          reason: authConfigurationIssue
+        },
+        { status: 503 }
+      );
     }
     return NextResponse.next();
   }
