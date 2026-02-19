@@ -18,9 +18,10 @@ export function getSuperAdminEmails() {
 
 export function isAdminEmail(email: string | null | undefined) {
   if (!email) return false;
+  const normalized = email.toLowerCase();
   const allowed = getAllowedAdminEmails();
-  if (allowed.size === 0) return false;
-  return allowed.has(email.toLowerCase());
+  const superAdmins = getSuperAdminEmails();
+  return allowed.has(normalized) || superAdmins.has(normalized);
 }
 
 /** Super admin = can edit site settings */

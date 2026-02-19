@@ -74,8 +74,8 @@ R2_CHECK_WRITE=true npm run r2:check
 - ustaw callback URL: `http://localhost:3000/api/auth/callback/github` (dev),
 - ustaw callback URL produkcyjny: `https://twoja-domena/api/auth/callback/github`,
 - uzupełnij: `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET`, `AUTH_SECRET` (min. 32 znaki),
-- ustaw `ADMIN_EMAILS` jako listę adresów oddzielonych przecinkami (co najmniej 1 adres),
-- opcjonalnie ustaw `SUPER_ADMIN_EMAILS` (edycja ustawień strony).
+- ustaw `SUPER_ADMIN_EMAILS` jako listę adresów oddzielonych przecinkami (co najmniej 1 adres),
+- `ADMIN_EMAILS` jest opcjonalne (dodatkowi admini bez uprawnień super-admin).
 
 4. Sprawdź połączenie z bazą:
 

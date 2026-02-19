@@ -15,8 +15,8 @@ function issueMessage(issue: string | null) {
   if (issue === "weak_auth_secret") {
     return "Ustaw `AUTH_SECRET` (minimum 32 znaki).";
   }
-  if (issue === "missing_admin_allowlist") {
-    return "Ustaw `ADMIN_EMAILS` (co najmniej 1 adres e-mail).";
+  if (issue === "missing_super_admin_allowlist") {
+    return "Ustaw `SUPER_ADMIN_EMAILS` (co najmniej 1 adres e-mail).";
   }
   return null;
 }
@@ -29,8 +29,8 @@ export function AdminLogin({ oauthConfigured, authConfigIssue }: Props) {
       <CardBody className="d-grid gap-3">
         <h2>Panel administracyjny</h2>
         <p className="mb-0 text-body-secondary">
-          Logowanie do panelu admina odbywa się przez GitHub OAuth. Dostęp mają tylko adresy e-mail z allowlisty
-          `ADMIN_EMAILS`.
+          Logowanie do panelu admina odbywa się przez GitHub OAuth. Dostęp mają adresy e-mail z allowlist:
+          `ADMIN_EMAILS` oraz `SUPER_ADMIN_EMAILS`.
         </p>
         {!oauthConfigured && warning ? <p className="mb-0 text-warning">{warning}</p> : null}
         <Button

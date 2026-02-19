@@ -1,19 +1,19 @@
 import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
-import { getAllowedAdminEmails, isAdminEmail } from "@/lib/admin-auth";
+import { getSuperAdminEmails, isAdminEmail } from "@/lib/admin-auth";
 
 const githubId = process.env.AUTH_GITHUB_ID;
 const githubSecret = process.env.AUTH_GITHUB_SECRET;
 const authSecret = process.env.AUTH_SECRET?.trim() ?? "";
 const isAuthSecretStrong = authSecret.length >= 32;
-const hasAdminAllowlist = getAllowedAdminEmails().size > 0;
+const hasSuperAdminAllowlist = getSuperAdminEmails().size > 0;
 
 export const authConfigurationIssue = !githubId || !githubSecret
   ? "missing_oauth_credentials"
   : !isAuthSecretStrong
     ? "weak_auth_secret"
-    : !hasAdminAllowlist
-      ? "missing_admin_allowlist"
+    : !hasSuperAdminAllowlist
+      ? "missing_super_admin_allowlist"
       : null;
 
 export const isOAuthConfigured = authConfigurationIssue === null;
