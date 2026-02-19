@@ -84,18 +84,25 @@ export async function sendSubmissionAcceptedEmail(submission: VehicleSubmission)
 
 export async function sendSubmissionRejectedEmail(submission: VehicleSubmission) {
   const settings = await getSettings();
+  const parkingMapText = settings.parkingMapUrl
+    ? `Mapa parkingu: ${settings.parkingMapUrl}\n\n`
+    : "";
+  const parkingMapHtml = settings.parkingMapUrl
+    ? `<p><strong>Mapa parkingu:</strong> <a href="${settings.parkingMapUrl}" target="_blank" rel="noreferrer">${settings.parkingMapUrl}</a></p>`
+    : "";
+
   const subject = `Informacja o zgłoszeniu - ${settings.eventName}`;
   const text =
     `Cześć ${submission.firstName},\n\n` +
     "Tym razem nie mogliśmy zaakceptować Twojego zgłoszenia pojazdu.\n" +
     "Mimo to serdecznie zapraszamy Cię jako odwiedzającego na wydarzenie.\n" +
-    `Mapa parkingu: ${settings.parkingMapUrl}\n\n` +
+    parkingMapText +
     "Do zobaczenia,\nFanatic Speed Team";
 
   const html = `<p>Cześć ${submission.firstName},</p>
 <p>Tym razem nie mogliśmy zaakceptować Twojego zgłoszenia pojazdu.</p>
 <p>Mimo to serdecznie zapraszamy Cię jako odwiedzającego na wydarzenie.</p>
-<p><strong>Mapa parkingu:</strong> <a href="${settings.parkingMapUrl}" target="_blank" rel="noreferrer">${settings.parkingMapUrl}</a></p>
+${parkingMapHtml}
 <p>Do zobaczenia,<br/>Fanatic Speed Team</p>`;
 
   return sendMail({ to: submission.email, subject, text, html });

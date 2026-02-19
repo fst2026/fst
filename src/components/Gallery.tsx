@@ -6,10 +6,10 @@ import { Carousel, Modal } from "react-bootstrap";
 
 type Props = {
   images: string[];
-  dropboxUrl?: string;
+  externalGalleryUrl?: string;
 };
 
-export function Gallery({ images, dropboxUrl }: Props) {
+export function Gallery({ images, externalGalleryUrl }: Props) {
   const [showModal, setShowModal] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -46,14 +46,14 @@ export function Gallery({ images, dropboxUrl }: Props) {
         ))}
       </div>
 
-      {dropboxUrl && (
+      {externalGalleryUrl && (
         <p className="gallery-link">
           <a
-            href={dropboxUrl}
+            href={externalGalleryUrl}
             target="_blank"
             rel="noopener noreferrer nofollow"
           >
-            Zobacz pełną galerię na Dropbox
+            Zobacz pełną galerię
           </a>
         </p>
       )}

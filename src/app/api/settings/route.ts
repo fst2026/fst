@@ -11,9 +11,17 @@ const safeUrlSchema = z.string().url().refine(
   "URL musi zaczynać się od https:// lub http://"
 ).or(z.literal(""));
 
+const eventDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Data musi być w formacie YYYY-MM-DD")
+  .refine((value) => {
+    const date = new Date(`${value}T00:00:00.000Z`);
+    return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+  }, "Podaj poprawną datę kalendarzową");
+
 const settingsSchema = z.object({
   eventName: z.string().min(1).max(200).optional(),
-  eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data musi być w formacie YYYY-MM-DD").optional(),
+  eventDate: eventDateSchema.optional(),
   eventLocation: z.string().min(1).max(300).optional(),
   facebookEventUrl: safeUrlSchema.optional(),
   galleryDropboxUrl: safeUrlSchema.optional(),

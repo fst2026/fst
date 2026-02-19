@@ -4,6 +4,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "@/app/globals.css";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { getCachedSettings } from "@/lib/settings";
 
 const heading = Bebas_Neue({
   variable: "--font-heading",
@@ -35,7 +36,9 @@ export const metadata: Metadata = {
   }
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const settings = await getCachedSettings();
+
   return (
     <html lang="pl">
       <body className={`${heading.variable} ${body.variable}`}>

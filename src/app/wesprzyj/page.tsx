@@ -8,30 +8,37 @@ export const metadata: Metadata = {
   alternates: { canonical: "/wesprzyj" }
 };
 
+const FALLBACK = {
+  accountNumber: "41 8909 0006 0010 0019 6699 0001",
+  taxId: "7561999499"
+};
+
 export default async function SupportPage() {
   const settings = await getCachedSettings();
+  const accountNumber = settings.associationAccountNumber || FALLBACK.accountNumber;
+  const taxId = settings.associationTaxId || FALLBACK.taxId;
 
   return (
     <Stack gap={3}>
       <h1>Wesprzyj nasze działania</h1>
       <Card className="form-card shadow-sm border-0">
-        <CardBody className="d-grid gap-2">
+        <CardBody className="d-grid gap-3">
           <p>
             Możesz wesprzeć rozwój wydarzeń i działalność stowarzyszenia poprzez darowiznę. Każde wsparcie
             przeznaczamy na organizację eventów, infrastrukturę i działania społeczne.
           </p>
-          <p>
-            <strong>Dane stowarzyszenia:</strong>
-            <br />
-            {settings.associationName}
-            <br />
-            {settings.associationTaxId}
-          </p>
-          <p>
+          <div>
             <strong>Numer konta:</strong>
             <br />
-            {settings.associationAccountNumber}
-          </p>
+            <span style={{ fontFamily: "monospace", fontSize: "1.1rem" }}>
+              {accountNumber}
+            </span>
+          </div>
+          <div>
+            <strong>NIP:</strong>
+            <br />
+            {taxId}
+          </div>
         </CardBody>
       </Card>
     </Stack>
