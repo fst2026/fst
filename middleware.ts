@@ -34,9 +34,9 @@ export default auth((request: RequestWithAuth) => {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  const signInUrl = new URL("/api/auth/signin", request.url);
-  signInUrl.searchParams.set("callbackUrl", request.url);
-  return NextResponse.redirect(signInUrl);
+  // For app routes (e.g. /backstage), let the page handle auth UI.
+  // Redirecting to NextAuth default sign-in page can break UX on some deployments.
+  return NextResponse.next();
 });
 
 export const config = {
