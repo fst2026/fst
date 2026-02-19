@@ -1,0 +1,31 @@
+{
+  "name": "fanaticspeedteam",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "db:check": "node scripts/check-db.mjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.891.0",
+    "bootstrap": "^5.3.3",
+    "next": "^16.1.6",
+    "next-auth": "5.0.0-beta.30",
+    "nodemailer": "^7.0.13",
+    "pg": "^8.13.1",
+    "react": "^19.0.0",
+    "react-bootstrap": "^2.10.9",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.5",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "eslint": "^9.20.1",
+    "eslint-config-next": "^16.1.6",
+    "typescript": "^5.7.3"
+  }
+}
