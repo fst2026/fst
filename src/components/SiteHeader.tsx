@@ -11,12 +11,12 @@ const navItems = [
   { href: "/wesprzyj", label: "Wesprzyj działania" }
 ];
 
-export function SiteHeader({ eventName = "Fanatic Summer Car Show" }: { eventName?: string }) {
+export function SiteHeader() {
   return (
     <Navbar expand="lg" collapseOnSelect className="site-header" sticky="top" data-bs-theme="dark">
       <Container className="py-2">
         <NavbarBrand as={Link} href="/" className="brand">
-          {eventName}
+          FANATIC SPEED TEAM
         </NavbarBrand>
         <NavbarToggle aria-controls="main-nav" />
         <NavbarCollapse id="main-nav" className="justify-content-end">

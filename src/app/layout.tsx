@@ -42,7 +42,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="pl">
       <body className={`${heading.variable} ${body.variable}`}>
-        <SiteHeader eventName={settings.eventName} />
+        <SiteHeader />
         <main className="container page">{children}</main>
         <SiteFooter />
       </body>

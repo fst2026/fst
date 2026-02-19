@@ -1,10 +1,19 @@
+@font-face {
+  font-family: 'Platinum Sign';
+  src: url('/fonts/Platinum Sign Over.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --fst-bg: #090f1f;
-  --fst-bg-soft: #111a2d;
-  --fst-line: #2a3c66;
-  --fst-text: #eaf0ff;
-  --fst-muted: #b9c7e6;
+  --fst-bg: #0a0a08;
+  --fst-bg-soft: #141410;
+  --fst-line: #3a3520;
+  --fst-text: #f0ebe0;
+  --fst-muted: #a09080;
   --fst-accent: #ff5a2d;
+  --font-brand: 'Platinum Sign', cursive;
 }
 
 html,
@@ -13,9 +22,9 @@ body {
   padding: 0;
   min-height: 100%;
   background:
-    radial-gradient(circle at 20% -10%, rgba(255, 90, 45, 0.35), transparent 35%),
-    radial-gradient(circle at 80% 0%, rgba(255, 209, 102, 0.2), transparent 30%),
-    linear-gradient(150deg, #090f1f, #0b1327 40%, #090f1f);
+    radial-gradient(circle at 20% -10%, rgba(66, 51, 0, 0.5), transparent 40%),
+    radial-gradient(circle at 80% 0%, rgba(66, 51, 0, 0.3), transparent 35%),
+    linear-gradient(150deg, #1a1508, #0a0a06 35%, #050504);
   color: var(--fst-text);
   font-family: var(--font-body), sans-serif;
 }
@@ -48,19 +57,20 @@ h2 {
 }
 
 .site-header.navbar {
-  background: rgba(8, 13, 25, 0.85);
+  background: rgba(10, 10, 8, 0.92);
   backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(185, 199, 230, 0.2);
+  border-bottom: 1px solid rgba(60, 50, 20, 0.35);
 }
 
 .site-header .navbar-brand.brand {
   color: var(--fst-text);
-  font-size: clamp(1.2rem, 2.2vw, 1.9rem);
-  letter-spacing: 0.06em;
+  font-family: var(--font-brand);
+  font-size: clamp(1.2rem, 2.4vw, 1.8rem);
+  letter-spacing: 0.02em;
 }
 
 .site-header .navbar-toggler {
-  border-color: rgba(185, 199, 230, 0.35);
+  border-color: rgba(160, 144, 128, 0.35);
 }
 
 .site-header .navbar-nav .nav-link {
@@ -73,7 +83,7 @@ h2 {
 }
 
 .site-footer {
-  border-top: 1px solid rgba(185, 199, 230, 0.15);
+  border-top: 1px solid rgba(60, 50, 20, 0.3);
   padding: 1.2rem 0 2rem;
   color: var(--fst-muted);
 }
@@ -131,7 +141,7 @@ h2 {
 .footer-socials a {
   width: 34px;
   height: 34px;
-  border: 1px solid rgba(185, 199, 230, 0.3);
+  border: 1px solid rgba(160, 144, 128, 0.3);
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
@@ -159,15 +169,19 @@ h2 {
 }
 
 .hero {
-  border: 1px solid var(--fst-line);
+  border: 1px solid rgba(112, 86, 0, 0.4);
   border-radius: 20px;
   padding: 2rem;
-  background: linear-gradient(135deg, rgba(255, 90, 45, 0.2), rgba(17, 26, 45, 0.92) 55%);
+  background: linear-gradient(135deg, rgba(112, 86, 0, 0.7) 0%, rgba(50, 40, 0, 0.85) 40%, rgba(15, 12, 5, 0.95) 100%);
+}
+
+.hero h1 {
+  font-style: italic;
 }
 
 .form-card {
-  background: rgba(17, 26, 45, 0.86);
-  border: 1px solid var(--fst-line) !important;
+  background: rgba(18, 16, 10, 0.85);
+  border: 1px solid rgba(60, 50, 20, 0.4) !important;
   color: var(--fst-text);
 }
 
@@ -189,21 +203,21 @@ h2 {
 
 .form-card .form-control,
 .form-card .form-select {
-  background: #0b1325;
+  background: #0c0b08;
   border-color: var(--fst-line);
   color: var(--fst-text);
 }
 
 .form-card .form-control::placeholder {
-  color: #8fa4d1;
+  color: #706858;
 }
 
 .form-card .form-control:focus,
 .form-card .form-select:focus {
-  background: #0b1325;
+  background: #0c0b08;
   color: var(--fst-text);
-  border-color: #4e6fa8;
-  box-shadow: 0 0 0 0.2rem rgba(78, 111, 168, 0.2);
+  border-color: #5a4a20;
+  box-shadow: 0 0 0 0.2rem rgba(90, 74, 32, 0.25);
 }
 
 .btn-primary {
@@ -218,7 +232,7 @@ h2 {
 }
 
 .btn-outline-light {
-  border-color: rgba(185, 199, 230, 0.45);
+  border-color: rgba(160, 144, 128, 0.5);
 }
 
 .gallery {
@@ -253,7 +267,7 @@ h2 {
   height: 190px;
   object-fit: cover;
   display: block;
-  border: 1px solid var(--fst-line);
+  border: 1px solid rgba(60, 50, 20, 0.4);
   border-radius: 12px;
 }
 
@@ -276,12 +290,12 @@ h2 {
 
 /* Gallery Modal */
 .gallery-modal .modal-content {
-  background: rgba(10, 18, 35, 0.98);
-  border: 1px solid rgba(185, 199, 230, 0.2);
+  background: rgba(12, 11, 8, 0.98);
+  border: 1px solid rgba(60, 50, 20, 0.4);
 }
 
 .gallery-modal .modal-header {
-  border-bottom-color: rgba(185, 199, 230, 0.2);
+  border-bottom-color: rgba(60, 50, 20, 0.3);
 }
 
 .gallery-modal .modal-body {
@@ -312,7 +326,7 @@ h2 {
 
 /* Admin Toolbar */
 .admin-toolbar {
-  background: linear-gradient(145deg, rgba(20, 33, 60, 0.95), rgba(14, 24, 45, 0.95));
+  background: linear-gradient(145deg, rgba(20, 18, 12, 0.95), rgba(12, 11, 8, 0.95));
 }
 
 .admin-toolbar-body {
@@ -374,7 +388,7 @@ h2 {
 }
 
 .admin-filter {
-  background: rgba(17, 26, 45, 0.7);
+  background: rgba(18, 16, 10, 0.7);
   border: 1px solid var(--fst-line);
   border-radius: 8px;
   color: var(--fst-muted);
@@ -385,7 +399,7 @@ h2 {
 }
 
 .admin-filter:hover {
-  border-color: rgba(185, 199, 230, 0.5);
+  border-color: rgba(160, 144, 128, 0.5);
   color: var(--fst-text);
 }
 
@@ -499,7 +513,7 @@ h2 {
   grid-template-columns: 1fr 1fr;
   gap: 0.6rem 1rem;
   padding-top: 0.5rem;
-  border-top: 1px solid var(--fst-line);
+  border-top: 1px solid rgba(60, 50, 20, 0.4);
   margin-top: 0.25rem;
 }
 
@@ -542,7 +556,7 @@ h2 {
   gap: 0.5rem;
   margin-top: 0.5rem;
   padding-top: 0.75rem;
-  border-top: 1px solid var(--fst-line);
+  border-top: 1px solid rgba(60, 50, 20, 0.4);
 }
 
 .admin-card-actions .btn {
@@ -570,21 +584,21 @@ h2 {
 .admin-table th,
 .admin-table td {
   padding: 0.85rem 1rem;
-  border-bottom: 1px solid rgba(185, 199, 230, 0.12);
+  border-bottom: 1px solid rgba(60, 50, 20, 0.25);
 }
 
 .admin-table th {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #a8b8d8;
-  background: rgba(8, 14, 28, 0.55);
+  color: #a09080;
+  background: rgba(12, 11, 8, 0.55);
   text-align: left;
   white-space: nowrap;
 }
 
 .admin-table td {
-  color: #edf3ff;
+  color: #f0ebe0;
   font-size: 0.9rem;
   vertical-align: top;
 }
@@ -665,7 +679,7 @@ h2 {
 }
 
 .admin-photo-thumb {
-  border: 1px solid rgba(185, 199, 230, 0.28);
+  border: 1px solid rgba(160, 144, 128, 0.28);
   border-radius: 6px;
   padding: 0;
   background: transparent;
@@ -686,9 +700,9 @@ h2 {
 }
 
 .admin-photo-more {
-  border: 1px dashed rgba(185, 199, 230, 0.5);
+  border: 1px dashed rgba(160, 144, 128, 0.5);
   color: var(--fst-text);
-  background: rgba(11, 19, 37, 0.75);
+  background: rgba(12, 11, 8, 0.75);
   border-radius: 6px;
   height: 48px;
   min-width: 48px;
@@ -705,12 +719,12 @@ h2 {
 
 /* Gallery Modal */
 .admin-gallery-modal .modal-content {
-  background: rgba(10, 18, 35, 0.98);
-  border: 1px solid rgba(185, 199, 230, 0.2);
+  background: rgba(12, 11, 8, 0.98);
+  border: 1px solid rgba(60, 50, 20, 0.4);
 }
 
 .admin-gallery-modal .modal-header {
-  border-bottom-color: rgba(185, 199, 230, 0.2);
+  border-bottom-color: rgba(60, 50, 20, 0.3);
 }
 
 .admin-gallery-modal .modal-body {
