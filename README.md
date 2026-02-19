@@ -12,6 +12,7 @@ Strona wydarzenia motoryzacyjnego `Fanatic Summer Car Show` z:
 
 - Interfejs jest zbudowany na gotowych komponentach `react-bootstrap`.
 - Style biblioteki są ładowane globalnie (`bootstrap/dist/css/bootstrap.min.css`).
+- 
 
 ## Backend MVP (production-ready)
 
