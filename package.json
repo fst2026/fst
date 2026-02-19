@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "db:check": "node scripts/check-db.mjs"
+    "db:check": "node scripts/check-db.mjs",
+    "r2:check": "node scripts/check-r2.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.891.0",
@@ -18,7 +19,8 @@
     "pg": "^8.13.1",
     "react": "^19.0.0",
     "react-bootstrap": "^2.10.9",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^22.13.5",

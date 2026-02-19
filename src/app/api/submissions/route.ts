@@ -11,19 +11,60 @@ import { VehicleSubmission } from "@/lib/types";
 
 export const runtime = "nodejs";
 
-const textSchema = z.string().trim().min(1);
+const CURRENT_YEAR = new Date().getFullYear();
+const MIN_YEAR = 1900;
+
+const textSchema = z.string().trim().min(1).max(100);
+
+const productionYearSchema = z
+  .string()
+  .trim()
+  .regex(/^\d{4}$/, "Rok musi składać się z 4 cyfr")
+  .refine((val) => {
+    const year = parseInt(val, 10);
+    return year >= MIN_YEAR && year <= CURRENT_YEAR + 1;
+  }, `Rok musi być między ${MIN_YEAR} a ${CURRENT_YEAR + 1}`);
+
+const phoneSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .refine((val) => {
+    const digits = val.replace(/\D/g, "");
+    return digits.length >= 9 && digits.length <= 15;
+  }, "Numer telefonu musi mieć między 9 a 15 cyfr");
+
+const registrationSchema = z
+  .string()
+  .trim()
+  .min(4, "Numer rejestracyjny jest za krótki")
+  .max(10, "Numer rejestracyjny jest za długi")
+  .regex(/^[A-Za-z0-9 ]+$/, "Dozwolone tylko litery i cyfry")
+  .transform((val) => val.toUpperCase().replace(/\s+/g, " ").trim());
+
+const instagramSchema = z
+  .string()
+  .trim()
+  .optional()
+  .default("")
+  .refine((val) => {
+    if (!val) return true;
+    if (val.startsWith("http")) return val.includes("instagram.com");
+    const username = val.replace(/^@/, "");
+    return /^[a-zA-Z0-9._]{1,30}$/.test(username);
+  }, "Nieprawidłowy format Instagram");
 
 const submissionSchema = z.object({
   brand: textSchema,
   model: textSchema,
-  productionYear: textSchema,
-  registrationNumber: textSchema,
-  modifications: textSchema,
-  firstName: textSchema,
-  lastName: textSchema,
-  email: z.string().email(),
-  phone: textSchema,
-  instagram: z.string().trim().optional().default(""),
+  productionYear: productionYearSchema,
+  registrationNumber: registrationSchema,
+  modifications: z.string().trim().min(1).max(2000),
+  firstName: textSchema.max(50),
+  lastName: textSchema.max(50),
+  email: z.string().trim().email().max(100),
+  phone: phoneSchema,
+  instagram: instagramSchema,
   tshirtSize: textSchema
 });
 
@@ -81,7 +122,24 @@ export async function POST(request: Request) {
   });
 
   if (!parsed.success) {
-    return NextResponse.json({ message: "Sprawdź poprawność pól formularza." }, { status: 400 });
+    const firstError = parsed.error.issues[0];
+    const fieldName = firstError?.path[0];
+    const fieldLabels: Record<string, string> = {
+      brand: "Marka",
+      model: "Model",
+      productionYear: "Rok produkcji",
+      registrationNumber: "Numer rejestracyjny",
+      modifications: "Opis modyfikacji",
+      firstName: "Imię",
+      lastName: "Nazwisko",
+      email: "Adres e-mail",
+      phone: "Numer telefonu",
+      instagram: "Instagram",
+      tshirtSize: "Rozmiar koszulki"
+    };
+    const label = fieldName ? fieldLabels[String(fieldName)] || String(fieldName) : "Formularz";
+    const message = firstError?.message || "Sprawdź poprawność pól formularza.";
+    return NextResponse.json({ message: `${label}: ${message}` }, { status: 400 });
   }
 
   const acceptedRules = formData.get("acceptedRules") === "on";
@@ -98,6 +156,15 @@ export async function POST(request: Request) {
   const safeNormalized = normalized.filter((item): item is NonNullable<typeof item> => Boolean(item));
   const uploaded = await Promise.all(safeNormalized.map((photo) => uploadImageFile(photo)));
   const photoPaths = uploaded.filter((value): value is string => Boolean(value));
+
+  // Ensure all photos were uploaded successfully (all-or-nothing)
+  if (photoPaths.length !== safeNormalized.length) {
+    return NextResponse.json(
+      { message: "Nie udało się przesłać wszystkich zdjęć. Spróbuj ponownie." },
+      { status: 503 }
+    );
+  }
+
   const now = new Date().toISOString();
 
   const submission: VehicleSubmission = {

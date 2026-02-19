@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Card, CardBody, Stack } from "react-bootstrap";
+import { getCachedSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Regulamin eventu - Fanatic Summer Car Show",
@@ -7,7 +8,9 @@ export const metadata: Metadata = {
   alternates: { canonical: "/regulamin" }
 };
 
-export default function RulesPage() {
+export default async function RulesPage() {
+  const settings = await getCachedSettings();
+
   return (
     <Stack gap={3}>
       <h1>Regulamin eventu</h1>
@@ -29,7 +32,7 @@ export default function RulesPage() {
             <li>Należy stosować się do poleceń organizatora i służb porządkowych.</li>
           </ul>
           <h2>Opłata wpisowa</h2>
-          <p>Po akceptacji zgłoszenia obowiązuje opłata wpisowa 150 zł potwierdzająca przyjazd.</p>
+          <p>Po akceptacji zgłoszenia obowiązuje opłata wpisowa {settings.entryFeePln} zł potwierdzająca przyjazd.</p>
           <h2>Odpowiedzialność organizatora</h2>
           <p>
             Organizator nie odpowiada za szkody wynikające z nieprzestrzegania regulaminu lub zdarzeń losowych.

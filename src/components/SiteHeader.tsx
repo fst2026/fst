@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Container, Nav, Navbar, NavbarBrand, NavbarCollapse, NavbarToggle } from "react-bootstrap";
-import { EVENT_NAME } from "@/lib/constants";
 
 const navItems = [
   { href: "/", label: "Strona główna" },
@@ -12,12 +11,12 @@ const navItems = [
   { href: "/wesprzyj", label: "Wesprzyj działania" }
 ];
 
-export function SiteHeader() {
+export function SiteHeader({ eventName = "Fanatic Summer Car Show" }: { eventName?: string }) {
   return (
     <Navbar expand="lg" collapseOnSelect className="site-header" sticky="top" data-bs-theme="dark">
       <Container className="py-2">
         <NavbarBrand as={Link} href="/" className="brand">
-          {EVENT_NAME}
+          {eventName}
         </NavbarBrand>
         <NavbarToggle aria-controls="main-nav" />
         <NavbarCollapse id="main-nav" className="justify-content-end">

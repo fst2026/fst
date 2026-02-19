@@ -59,6 +59,14 @@ npm run dev
 - utwórz bucket w Cloudflare R2.
 - wygeneruj klucze API S3 dla R2.
 - uzupełnij pola `R2_*` w `.env.local`.
+- sprawdź połączenie:
+```bash
+npm run r2:check
+```
+- opcjonalnie sprawdź zapis/usunięcie obiektu:
+```bash
+R2_CHECK_WRITE=true npm run r2:check
+```
 
 3. GitHub OAuth (admin panel):
 - utwórz OAuth App w GitHub,
@@ -78,6 +86,19 @@ npm run db:check
 ```bash
 npm run dev
 ```
+
+## R2 na Vercel (produkcyjnie)
+
+Ustaw zmienne środowiskowe:
+
+- `R2_ENDPOINT`
+- `R2_REGION` (`auto`)
+- `R2_BUCKET`
+- `R2_ACCESS_KEY_ID`
+- `R2_SECRET_ACCESS_KEY`
+- `R2_PUBLIC_BASE_URL`
+
+Po deployu nowo wysłane zdjęcia będą zapisywane do R2, a w bazie w `photo_paths` zapiszą się pełne URL-e do obiektów.
 
 ## Ważne ścieżki
 

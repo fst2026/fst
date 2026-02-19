@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useRef, useState } from "react";
 import {
   Alert,
   Button,
@@ -13,48 +13,201 @@ import {
   FormGroup,
   FormLabel,
   FormSelect,
+  FormText,
   Row
 } from "react-bootstrap";
 import { MAX_PHOTOS, MAX_PHOTO_SIZE_BYTES, MIN_PHOTOS, TSHIRT_SIZES } from "@/lib/constants";
+
+const CURRENT_YEAR = new Date().getFullYear();
+const MIN_YEAR = 1900;
+
+type FieldErrors = {
+  productionYear?: string;
+  phone?: string;
+  registrationNumber?: string;
+  instagram?: string;
+};
+
+function validateProductionYear(value: string): string | undefined {
+  if (!value) return "Rok produkcji jest wymagany";
+  const year = parseInt(value, 10);
+  if (isNaN(year) || !/^\d{4}$/.test(value)) return "Wpisz poprawny rok (4 cyfry)";
+  if (year < MIN_YEAR || year > CURRENT_YEAR + 1) return `Rok musi być między ${MIN_YEAR} a ${CURRENT_YEAR + 1}`;
+  return undefined;
+}
+
+function validatePhone(value: string): string | undefined {
+  if (!value) return "Numer telefonu jest wymagany";
+  const digits = value.replace(/\D/g, "");
+  if (digits.length < 9) return "Numer telefonu musi mieć minimum 9 cyfr";
+  if (digits.length > 15) return "Numer telefonu jest za długi";
+  return undefined;
+}
+
+function validateRegistration(value: string): string | undefined {
+  if (!value) return "Numer rejestracyjny jest wymagany";
+  const cleaned = value.trim().toUpperCase();
+  if (cleaned.length < 4) return "Numer rejestracyjny jest za krótki";
+  if (cleaned.length > 8) return "Numer rejestracyjny jest za długi";
+  if (!/^[A-Z0-9 ]+$/.test(cleaned)) return "Dozwolone tylko litery i cyfry";
+  return undefined;
+}
+
+function validateInstagram(value: string): string | undefined {
+  if (!value) return undefined; // optional field
+  // Accept: @username, username, or full URL
+  const cleaned = value.trim();
+  if (cleaned.startsWith("http")) {
+    if (!cleaned.includes("instagram.com")) return "Wpisz link do Instagrama lub nazwę użytkownika";
+  } else {
+    const username = cleaned.replace(/^@/, "");
+    if (!/^[a-zA-Z0-9._]{1,30}$/.test(username)) return "Nieprawidłowa nazwa użytkownika";
+  }
+  return undefined;
+}
 
 export function SubmissionForm() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function markTouched(field: string) {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  }
+
+  function validateField(field: keyof FieldErrors, value: string) {
+    let error: string | undefined;
+    switch (field) {
+      case "productionYear":
+        error = validateProductionYear(value);
+        break;
+      case "phone":
+        error = validatePhone(value);
+        break;
+      case "registrationNumber":
+        error = validateRegistration(value);
+        break;
+      case "instagram":
+        error = validateInstagram(value);
+        break;
+    }
+    setFieldErrors((prev) => ({ ...prev, [field]: error }));
+    return error;
+  }
+
+  function onFieldChange(field: keyof FieldErrors, value: string) {
+    if (touched[field]) {
+      validateField(field, value);
+    }
+  }
+
+  function onFieldBlur(field: keyof FieldErrors, value: string) {
+    markTouched(field);
+    validateField(field, value);
+  }
+
+  function onPickPhotos(event: ChangeEvent<HTMLInputElement>) {
+    const incoming = Array.from(event.currentTarget.files ?? []);
+    if (!incoming.length) return;
+
+    const next = [...selectedFiles];
+    for (const file of incoming) {
+      const exists = next.some(
+        (item) => item.name === file.name && item.size === file.size && item.lastModified === file.lastModified
+      );
+      if (!exists) next.push(file);
+    }
+
+    if (next.length > MAX_PHOTOS) {
+      setError(`Maksymalnie możesz dodać ${MAX_PHOTOS} zdjęć.`);
+      event.currentTarget.value = "";
+      return;
+    }
+
+    setError("");
+    setSelectedFiles(next);
+    event.currentTarget.value = "";
+  }
+
+  function removePhoto(index: number) {
+    setSelectedFiles((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
+  }
+
+  function clearPhotos() {
+    setSelectedFiles([]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
     setSuccess("");
-    setLoading(true);
 
     const form = event.currentTarget;
     const formData = new FormData(form);
-    const files = formData.getAll("photos").filter((item) => item instanceof File) as File[];
 
+    // Validate all fields
+    const productionYear = formData.get("productionYear") as string;
+    const phone = formData.get("phone") as string;
+    const registrationNumber = formData.get("registrationNumber") as string;
+    const instagram = formData.get("instagram") as string;
+
+    const errors: FieldErrors = {
+      productionYear: validateProductionYear(productionYear),
+      phone: validatePhone(phone),
+      registrationNumber: validateRegistration(registrationNumber),
+      instagram: validateInstagram(instagram)
+    };
+
+    setFieldErrors(errors);
+    setTouched({ productionYear: true, phone: true, registrationNumber: true, instagram: true });
+
+    const hasErrors = Object.values(errors).some((e) => e !== undefined);
+    if (hasErrors) {
+      setError("Popraw błędy w formularzu.");
+      return;
+    }
+
+    const files = selectedFiles;
     if (files.length < MIN_PHOTOS) {
       setError(`Wymagane są minimum ${MIN_PHOTOS} zdjęcia pojazdu.`);
-      setLoading(false);
       return;
     }
 
     if (files.length > MAX_PHOTOS) {
       setError(`Maksymalnie możesz dodać ${MAX_PHOTOS} zdjęć.`);
-      setLoading(false);
       return;
     }
 
     const tooLarge = files.find((file) => file.size > MAX_PHOTO_SIZE_BYTES);
     if (tooLarge) {
-      setError("Każde zdjęcie może mieć maksymalnie 5 MB.");
-      setLoading(false);
+      setError(`Plik "${tooLarge.name}" jest za duży (max 5 MB).`);
       return;
     }
+
+    setLoading(true);
+
+    // Normalize registration number
+    const normalizedRegistration = registrationNumber.trim().toUpperCase().replace(/\s+/g, " ");
+
+    const payload = new FormData();
+    for (const [key, value] of formData.entries()) {
+      if (key === "registrationNumber") {
+        payload.append(key, normalizedRegistration);
+      } else {
+        payload.append(key, value);
+      }
+    }
+    for (const file of files) payload.append("photos", file);
 
     try {
       const res = await fetch("/api/submissions", {
         method: "POST",
-        body: formData
+        body: payload
       });
 
       const body = (await res.json()) as { message?: string };
@@ -63,6 +216,9 @@ export function SubmissionForm() {
       } else {
         setSuccess("Zgłoszenie zostało wysłane. Sprawdź e-mail po potwierdzenie przyjęcia.");
         form.reset();
+        clearPhotos();
+        setFieldErrors({});
+        setTouched({});
       }
     } catch {
       setError("Błąd połączenia z serwerem.");
@@ -74,11 +230,11 @@ export function SubmissionForm() {
   return (
     <Card className="form-card shadow-sm border-0">
       <CardBody>
-        <Form onSubmit={onSubmit} className="d-grid gap-3">
+        <Form onSubmit={onSubmit} className="d-grid gap-3" noValidate>
           <h2>Formularz zgłoszeniowy</h2>
           <p className="mb-0 text-body-secondary">
-            Zgłoszenia podlegają weryfikacji. Po akceptacji należy uiścić opłatę wpisową 150 zł.
-            Na wjeździe uczestnik otrzymuje pakiet powitalny (koszulka + gadżety).
+            Zgłoszenia podlegają weryfikacji. Po akceptacji należy uiścić opłatę wpisową 150 zł. Na wjeździe uczestnik
+            otrzymuje pakiet powitalny (koszulka + gadżety).
           </p>
 
           <h3 className="mt-2">Dane pojazdu</h3>
@@ -86,37 +242,113 @@ export function SubmissionForm() {
             <Col md={6}>
               <FormGroup controlId="brand">
                 <FormLabel>Marka</FormLabel>
-                <FormControl name="brand" required />
+                <FormControl name="brand" required maxLength={50} autoComplete="off" />
               </FormGroup>
             </Col>
             <Col md={6}>
               <FormGroup controlId="model">
                 <FormLabel>Model</FormLabel>
-                <FormControl name="model" required />
+                <FormControl name="model" required maxLength={50} autoComplete="off" />
               </FormGroup>
             </Col>
             <Col md={6}>
               <FormGroup controlId="productionYear">
                 <FormLabel>Rok produkcji</FormLabel>
-                <FormControl name="productionYear" required inputMode="numeric" />
+                <FormControl
+                  name="productionYear"
+                  required
+                  inputMode="numeric"
+                  pattern="\d{4}"
+                  maxLength={4}
+                  placeholder={`np. ${CURRENT_YEAR - 5}`}
+                  isInvalid={touched.productionYear && !!fieldErrors.productionYear}
+                  onChange={(e) => onFieldChange("productionYear", e.target.value)}
+                  onBlur={(e) => onFieldBlur("productionYear", e.target.value)}
+                />
+                {touched.productionYear && fieldErrors.productionYear && (
+                  <FormText className="text-danger">{fieldErrors.productionYear}</FormText>
+                )}
               </FormGroup>
             </Col>
             <Col md={6}>
               <FormGroup controlId="registrationNumber">
                 <FormLabel>Numer rejestracyjny</FormLabel>
-                <FormControl name="registrationNumber" required />
+                <FormControl
+                  name="registrationNumber"
+                  required
+                  maxLength={10}
+                  placeholder="np. GD 12345"
+                  style={{ textTransform: "uppercase" }}
+                  isInvalid={touched.registrationNumber && !!fieldErrors.registrationNumber}
+                  onChange={(e) => onFieldChange("registrationNumber", e.target.value)}
+                  onBlur={(e) => onFieldBlur("registrationNumber", e.target.value)}
+                />
+                {touched.registrationNumber && fieldErrors.registrationNumber && (
+                  <FormText className="text-danger">{fieldErrors.registrationNumber}</FormText>
+                )}
               </FormGroup>
             </Col>
             <Col md={12}>
               <FormGroup controlId="modifications">
                 <FormLabel>Opis modyfikacji</FormLabel>
-                <FormControl as="textarea" name="modifications" rows={4} required />
+                <FormControl as="textarea" name="modifications" rows={4} required maxLength={2000} />
+                <FormText className="text-body-secondary">Opisz wykonane modyfikacje (max 2000 znaków)</FormText>
               </FormGroup>
             </Col>
             <Col md={12}>
               <FormGroup controlId="photos">
-                <FormLabel>Zdjęcia pojazdu (min. 3, max 5, do 5 MB/szt.)</FormLabel>
-                <FormControl name="photos" type="file" accept="image/*" multiple required />
+                <FormLabel>
+                  Zdjęcia pojazdu (min. {MIN_PHOTOS}, max {MAX_PHOTOS}, do 5 MB/szt.)
+                </FormLabel>
+                <div className="d-flex flex-wrap gap-2 align-items-center">
+                  <Button type="button" variant="outline-light" onClick={() => fileInputRef.current?.click()}>
+                    Dodaj zdjęcia
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline-light"
+                    onClick={clearPhotos}
+                    disabled={!selectedFiles.length || loading}
+                  >
+                    Wyczyść
+                  </Button>
+                  <span className="small text-body-secondary">
+                    Wybrano: {selectedFiles.length}/{MAX_PHOTOS}
+                  </span>
+                </div>
+                <FormControl
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  multiple
+                  onChange={onPickPhotos}
+                  className="d-none"
+                />
+                <FormText className="text-body-secondary d-block mt-2">
+                  Za duże zdjęcia? Skompresuj je za darmo:{" "}
+                  <a
+                    href="https://imagecompressor.com/pl/"
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                    className="text-body-secondary"
+                  >
+                    imagecompressor.com
+                  </a>
+                </FormText>
+                {selectedFiles.length > 0 && (
+                  <div className="d-grid gap-1 mt-2">
+                    {selectedFiles.map((file, index) => (
+                      <div key={`${file.name}-${file.lastModified}-${index}`} className="d-flex justify-content-between gap-2">
+                        <span className="small text-break">
+                          {file.name} ({Math.ceil(file.size / 1024)} KB)
+                        </span>
+                        <Button type="button" size="sm" variant="outline-light" onClick={() => removePhoto(index)}>
+                          Usuń
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </FormGroup>
             </Col>
           </Row>
@@ -126,31 +358,55 @@ export function SubmissionForm() {
             <Col md={6}>
               <FormGroup controlId="firstName">
                 <FormLabel>Imię</FormLabel>
-                <FormControl name="firstName" required />
+                <FormControl name="firstName" required maxLength={50} autoComplete="given-name" />
               </FormGroup>
             </Col>
             <Col md={6}>
               <FormGroup controlId="lastName">
                 <FormLabel>Nazwisko</FormLabel>
-                <FormControl name="lastName" required />
+                <FormControl name="lastName" required maxLength={50} autoComplete="family-name" />
               </FormGroup>
             </Col>
             <Col md={6}>
               <FormGroup controlId="email">
                 <FormLabel>Adres e-mail</FormLabel>
-                <FormControl name="email" type="email" required />
+                <FormControl name="email" type="email" required maxLength={100} autoComplete="email" />
               </FormGroup>
             </Col>
             <Col md={6}>
               <FormGroup controlId="phone">
                 <FormLabel>Numer telefonu</FormLabel>
-                <FormControl name="phone" required />
+                <FormControl
+                  name="phone"
+                  type="tel"
+                  required
+                  maxLength={20}
+                  placeholder="np. 123 456 789"
+                  autoComplete="tel"
+                  inputMode="tel"
+                  isInvalid={touched.phone && !!fieldErrors.phone}
+                  onChange={(e) => onFieldChange("phone", e.target.value)}
+                  onBlur={(e) => onFieldBlur("phone", e.target.value)}
+                />
+                {touched.phone && fieldErrors.phone && <FormText className="text-danger">{fieldErrors.phone}</FormText>}
               </FormGroup>
             </Col>
             <Col md={6}>
               <FormGroup controlId="instagram">
-                <FormLabel>Link do Instagrama</FormLabel>
-                <FormControl name="instagram" type="url" placeholder="https://instagram.com/twoj_profil" />
+                <FormLabel>
+                  Instagram <span className="text-body-secondary">(opcjonalnie)</span>
+                </FormLabel>
+                <FormControl
+                  name="instagram"
+                  placeholder="@nazwa lub link"
+                  maxLength={100}
+                  isInvalid={touched.instagram && !!fieldErrors.instagram}
+                  onChange={(e) => onFieldChange("instagram", e.target.value)}
+                  onBlur={(e) => onFieldBlur("instagram", e.target.value)}
+                />
+                {touched.instagram && fieldErrors.instagram && (
+                  <FormText className="text-danger">{fieldErrors.instagram}</FormText>
+                )}
               </FormGroup>
             </Col>
             <Col md={6}>
@@ -179,8 +435,24 @@ export function SubmissionForm() {
             {loading ? "Wysyłanie..." : "Wyślij zgłoszenie"}
           </Button>
 
-          {error ? <Alert variant="danger">{error}</Alert> : null}
-          {success ? <Alert variant="success">{success}</Alert> : null}
+          {error && (
+            <Alert variant="danger">
+              {error}
+              {error.includes("za duży") && (
+                <>
+                  {" "}
+                  <a
+                    href="https://imagecompressor.com/pl/"
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                  >
+                    Skompresuj tutaj
+                  </a>
+                </>
+              )}
+            </Alert>
+          )}
+          {success && <Alert variant="success">{success}</Alert>}
         </Form>
       </CardBody>
     </Card>

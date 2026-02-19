@@ -5,6 +5,8 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: process.cwd()
   },
+  serverExternalPackages: ["@aws-sdk/client-s3"],
+  // R2 credentials are read server-side only via process.env directly
   async headers() {
     return [
       {

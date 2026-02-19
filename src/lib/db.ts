@@ -1,5 +1,5 @@
 import pg from "pg";
-import { VehicleSubmission } from "@/lib/types";
+import { SiteSettings, VehicleSubmission } from "@/lib/types";
 
 type QueryResultRow = Record<string, unknown>;
 type DbQueryResult = { rows: QueryResultRow[] };
@@ -61,6 +61,15 @@ CREATE TABLE IF NOT EXISTS rate_limits (
 
 CREATE INDEX IF NOT EXISTS idx_submissions_created_at ON submissions (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_submissions_status ON submissions (status);
+
+CREATE TABLE IF NOT EXISTS site_settings (
+  id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  settings JSONB NOT NULL DEFAULT '{}'::jsonb,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+INSERT INTO site_settings (id, settings) VALUES (1, '{}'::jsonb)
+ON CONFLICT (id) DO NOTHING;
 `;
 
 async function ensureSchema() {
@@ -188,4 +197,44 @@ export async function incrementRateLimit(key: string, windowStart: number) {
     [key, windowStart]
   );
   return Number(result.rows[0]?.count ?? 1);
+}
+
+const defaultSettings: SiteSettings = {
+  eventName: "Fanatic Summer Car Show",
+  eventDate: "2026-07-20",
+  eventLocation: "Teren rekreacyjny FanaticSpeedTeam, woj. pomorskie",
+  facebookEventUrl: "https://facebook.com",
+  galleryDropboxUrl: "https://www.dropbox.com/sh/example",
+  socialFacebook: "https://facebook.com/fanaticspeedteam",
+  socialInstagram: "https://instagram.com/fanaticspeedteam",
+  socialTiktok: "https://tiktok.com/@fanaticspeedteam",
+  associationName: "Stowarzyszenie Fanatic Speed Team",
+  associationAccountNumber: "00 0000 0000 0000 0000 0000 0000",
+  associationTaxId: "NIP: 000-000-00-00",
+  associationContactEmail: "fanaticspeedteam@gmail.com",
+  entryFeePln: 150,
+  paymentRecipientName: "Stowarzyszenie Fanatic Speed Team",
+  paymentBankAccount: "00 0000 0000 0000 0000 0000 0000",
+  paymentDeadlineText: "w ciągu 72 godzin od otrzymania tej wiadomości",
+  parkingMapUrl: "https://maps.google.com/?q=Gda%C5%84sk"
+};
+
+export async function getSettings(): Promise<SiteSettings> {
+  await dbReady();
+  const result = await pool.query("SELECT settings FROM site_settings WHERE id = 1");
+  const stored = (result.rows[0]?.settings as Partial<SiteSettings>) ?? {};
+  return { ...defaultSettings, ...stored };
+}
+
+export async function updateSettings(partial: Partial<SiteSettings>): Promise<SiteSettings> {
+  await dbReady();
+  const result = await pool.query(
+    `UPDATE site_settings
+     SET settings = settings || $1::jsonb, updated_at = NOW()
+     WHERE id = 1
+     RETURNING settings`,
+    [JSON.stringify(partial)]
+  );
+  const stored = (result.rows[0]?.settings as Partial<SiteSettings>) ?? {};
+  return { ...defaultSettings, ...stored };
 }

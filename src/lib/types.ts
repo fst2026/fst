@@ -27,3 +27,32 @@ export type ContactRequest = {
   message: string;
   createdAt: string;
 };
+
+export type SiteSettings = {
+  // Wydarzenie
+  eventName: string;
+  eventDate: string; // ISO date format: YYYY-MM-DD
+  eventLocation: string;
+  facebookEventUrl: string;
+  galleryDropboxUrl: string;
+
+  // Social media
+  socialFacebook: string;
+  socialInstagram: string;
+  socialTiktok: string;
+
+  // Stowarzyszenie
+  associationName: string;
+  associationAccountNumber: string;
+  associationTaxId: string;
+  associationContactEmail: string;
+
+  // Płatności
+  entryFeePln: number;
+  paymentRecipientName: string;
+  paymentBankAccount: string;
+  paymentDeadlineText: string;
+
+  // Mapy
+  parkingMapUrl: string;
+};

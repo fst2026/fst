@@ -5,23 +5,26 @@ import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 const LOCAL_UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 
-const s3Config = {
-  endpoint: process.env.R2_ENDPOINT || process.env.S3_ENDPOINT,
-  region: process.env.R2_REGION || process.env.S3_REGION,
-  bucket: process.env.R2_BUCKET || process.env.S3_BUCKET,
-  key: process.env.R2_ACCESS_KEY_ID || process.env.S3_ACCESS_KEY_ID,
-  secret: process.env.R2_SECRET_ACCESS_KEY || process.env.S3_SECRET_ACCESS_KEY,
-  publicBaseUrl: process.env.R2_PUBLIC_BASE_URL || process.env.S3_PUBLIC_BASE_URL
-};
+function getS3Config() {
+  return {
+    endpoint: process.env.R2_ENDPOINT || process.env.S3_ENDPOINT,
+    region: process.env.R2_REGION || process.env.S3_REGION,
+    bucket: process.env.R2_BUCKET || process.env.S3_BUCKET,
+    key: process.env.R2_ACCESS_KEY_ID || process.env.S3_ACCESS_KEY_ID,
+    secret: process.env.R2_SECRET_ACCESS_KEY || process.env.S3_SECRET_ACCESS_KEY,
+    publicBaseUrl: process.env.R2_PUBLIC_BASE_URL || process.env.S3_PUBLIC_BASE_URL
+  };
+}
 
 function hasS3Config() {
+  const config = getS3Config();
   return Boolean(
-    s3Config.endpoint &&
-      s3Config.region &&
-      s3Config.bucket &&
-      s3Config.key &&
-      s3Config.secret &&
-      s3Config.publicBaseUrl
+    config.endpoint &&
+      config.region &&
+      config.bucket &&
+      config.key &&
+      config.secret &&
+      config.publicBaseUrl
   );
 }
 
@@ -37,13 +40,14 @@ function getS3Client() {
   if (!hasS3Config()) return null;
   if (s3Client) return s3Client;
 
+  const config = getS3Config();
   s3Client = new S3Client({
-    endpoint: s3Config.endpoint,
-    region: s3Config.region,
+    endpoint: config.endpoint,
+    region: config.region,
     forcePathStyle: true,
     credentials: {
-      accessKeyId: s3Config.key!,
-      secretAccessKey: s3Config.secret!
+      accessKeyId: config.key!,
+      secretAccessKey: config.secret!
     }
   });
   return s3Client;
@@ -111,15 +115,16 @@ export async function uploadImageFile(file: DetectedImage) {
 
   const s3 = getS3Client();
   if (s3) {
+    const config = getS3Config();
     await s3.send(
       new PutObjectCommand({
-        Bucket: s3Config.bucket!,
+        Bucket: config.bucket!,
         Key: fileName,
         Body: buffer,
         ContentType: file.mimeType
       })
     );
-    return `${s3Config.publicBaseUrl!.replace(/\/$/, "")}/${fileName}`;
+    return `${config.publicBaseUrl!.replace(/\/$/, "")}/${fileName}`;
   }
 
   // Vercel filesystem is ephemeral; without object storage we skip persistent writes.

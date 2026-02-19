@@ -23,7 +23,7 @@ export function AdminLogin({ oauthConfigured }: Props) {
           type="button"
           className="fw-semibold"
           disabled={!oauthConfigured}
-          onClick={() => signIn("github", { callbackUrl: "/admin" })}
+          onClick={() => signIn("github", { callbackUrl: "/backstage" })}
         >
           Zaloguj przez GitHub
         </Button>

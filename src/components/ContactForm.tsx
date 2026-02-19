@@ -4,12 +4,15 @@ import { FormEvent, useState } from "react";
 import { Alert, Button, Card, CardBody, Form, FormControl, FormGroup, FormLabel } from "react-bootstrap";
 
 export function ContactForm() {
-  const [state, setState] = useState<"idle" | "sent" | "error">("idle");
+  const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (state === "sending") return;
+
     const form = event.currentTarget;
     const formData = new FormData(form);
+    setState("sending");
 
     try {
       const res = await fetch("/api/contact", {
@@ -45,7 +48,9 @@ export function ContactForm() {
             <FormLabel>Wiadomość</FormLabel>
             <FormControl as="textarea" name="message" rows={5} required />
           </FormGroup>
-          <Button type="submit" className="fw-semibold">Wyślij</Button>
+          <Button type="submit" className="fw-semibold" disabled={state === "sending"}>
+            {state === "sending" ? "Wysyłanie..." : "Wyślij"}
+          </Button>
           {state === "sent" ? <Alert variant="success">Dziękujemy. Wiadomość wysłana.</Alert> : null}
           {state === "error" ? <Alert variant="danger">Nie udało się wysłać wiadomości.</Alert> : null}
         </Form>

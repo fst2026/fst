@@ -3,7 +3,8 @@ import { auth, isOAuthConfigured } from "@/auth";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import { AdminLogin } from "@/components/AdminLogin";
 import { getSubmissions } from "@/lib/db";
-import { isAdminEmail } from "@/lib/admin-auth";
+import { isAdminEmail, isSuperAdminEmail } from "@/lib/admin-auth";
+import { getCachedSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Panel admina - Fanatic Summer Car Show",
@@ -16,10 +17,19 @@ export const metadata: Metadata = {
 
 export default async function AdminPage() {
   const session = await auth();
-  const isAdmin = isAdminEmail(session?.user?.email);
+  const userEmail = session?.user?.email;
+  const isAdmin = isAdminEmail(userEmail);
 
   if (!isAdmin) return <AdminLogin oauthConfigured={isOAuthConfigured} />;
 
-  const submissions = await getSubmissions();
-  return <AdminDashboard initialSubmissions={submissions} />;
+  const canEditSettings = isSuperAdminEmail(userEmail);
+  const [submissions, settings] = await Promise.all([getSubmissions(), getCachedSettings()]);
+
+  return (
+    <AdminDashboard
+      initialSubmissions={submissions}
+      initialSettings={settings}
+      canEditSettings={canEditSettings}
+    />
+  );
 }

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Card, CardBody, Stack } from "react-bootstrap";
-import { ASSOCIATION_DETAILS } from "@/lib/constants";
+import { getCachedSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Wesprzyj nasze działania - Fanatic Speed Team",
@@ -8,7 +8,9 @@ export const metadata: Metadata = {
   alternates: { canonical: "/wesprzyj" }
 };
 
-export default function SupportPage() {
+export default async function SupportPage() {
+  const settings = await getCachedSettings();
+
   return (
     <Stack gap={3}>
       <h1>Wesprzyj nasze działania</h1>
@@ -21,14 +23,14 @@ export default function SupportPage() {
           <p>
             <strong>Dane stowarzyszenia:</strong>
             <br />
-            {ASSOCIATION_DETAILS.name}
+            {settings.associationName}
             <br />
-            {ASSOCIATION_DETAILS.taxId}
+            {settings.associationTaxId}
           </p>
           <p>
             <strong>Numer konta:</strong>
             <br />
-            {ASSOCIATION_DETAILS.accountNumber}
+            {settings.associationAccountNumber}
           </p>
         </CardBody>
       </Card>

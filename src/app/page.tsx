@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { Button, Card, CardBody, Col, Row, Stack } from "react-bootstrap";
-import { EVENT_DATE, EVENT_LOCATION, EVENT_NAME, FACEBOOK_EVENT_URL } from "@/lib/constants";
+import { Gallery } from "@/components/Gallery";
+import { getCachedSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Fanatic Summer Car Show - Strona główna",
@@ -31,21 +31,32 @@ const galleryImages = [
   "https://images.unsplash.com/photo-1493238792000-8113da705763?auto=format&fit=crop&w=1200&q=80"
 ];
 
-export default function HomePage() {
+function formatEventDate(isoDate: string): string {
+  const date = new Date(isoDate);
+  return date.toLocaleDateString("pl-PL", {
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  });
+}
+
+export default async function HomePage() {
+  const settings = await getCachedSettings();
+
   return (
     <Stack gap={3}>
       <section className="hero d-grid gap-3">
-        <h1>{EVENT_NAME}</h1>
+        <h1>{settings.eventName}</h1>
         <p>
-          <strong>Data:</strong> {EVENT_DATE}
+          <strong>Data:</strong> {formatEventDate(settings.eventDate)}
           <br />
-          <strong>Miejsce:</strong> {EVENT_LOCATION}
+          <strong>Miejsce:</strong> {settings.eventLocation}
         </p>
         <div className="d-flex gap-2 flex-wrap">
           <Link href="/zglos-pojazd" className="btn btn-primary">
             ZGŁOŚ POJAZD
           </Link>
-          <Button as="a" variant="outline-light" href={FACEBOOK_EVENT_URL} target="_blank" rel="noreferrer">
+          <Button as="a" variant="outline-light" href={settings.facebookEventUrl} target="_blank" rel="noreferrer">
             f Facebook event
           </Button>
         </div>
@@ -65,18 +76,7 @@ export default function HomePage() {
       <Card className="form-card shadow-sm border-0">
         <CardBody className="d-grid gap-3">
           <h2>Galeria poprzedniej edycji</h2>
-          <div className="gallery">
-            {galleryImages.map((src) => (
-              <Image
-                key={src}
-                src={src}
-                alt="Galeria Fanatic Summer Car Show"
-                width={1200}
-                height={800}
-                sizes="(max-width: 860px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              />
-            ))}
-          </div>
+          <Gallery images={galleryImages} dropboxUrl={settings.galleryDropboxUrl || undefined} />
         </CardBody>
       </Card>
 

@@ -4,7 +4,7 @@ import { auth, isOAuthConfigured } from "@/auth";
 import { isAdminEmail } from "@/lib/admin-auth";
 
 function isProtectedPath(pathname: string) {
-  return pathname === "/admin" || pathname.startsWith("/admin/") || pathname.startsWith("/api/submissions/export") || (pathname.startsWith("/api/submissions/") && pathname.endsWith("/status"));
+  return pathname === "/backstage" || pathname.startsWith("/backstage/") || pathname.startsWith("/api/submissions/export") || (pathname.startsWith("/api/submissions/") && pathname.endsWith("/status")) || (pathname === "/api/settings" && true);
 }
 
 type RequestWithAuth = NextRequest & {
@@ -40,5 +40,5 @@ export default auth((request: RequestWithAuth) => {
 });
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/submissions/:path*"]
+  matcher: ["/backstage/:path*", "/api/submissions/:path*", "/api/settings"]
 };
