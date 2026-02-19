@@ -73,8 +73,9 @@ R2_CHECK_WRITE=true npm run r2:check
 - utwórz OAuth App w GitHub,
 - ustaw callback URL: `http://localhost:3000/api/auth/callback/github` (dev),
 - ustaw callback URL produkcyjny: `https://twoja-domena/api/auth/callback/github`,
-- uzupełnij: `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET`, `AUTH_SECRET`,
-- ustaw `ADMIN_EMAILS` jako listę adresów oddzielonych przecinkami.
+- uzupełnij: `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET`, `AUTH_SECRET` (min. 32 znaki),
+- ustaw `ADMIN_EMAILS` jako listę adresów oddzielonych przecinkami (co najmniej 1 adres),
+- opcjonalnie ustaw `SUPER_ADMIN_EMAILS` (edycja ustawień strony).
 
 4. Sprawdź połączenie z bazą:
 
@@ -106,7 +107,7 @@ Po deployu nowo wysłane zdjęcia będą zapisywane do R2, a w bazie w `photo_pa
 - Strona główna: `/`
 - Zgłoszenie pojazdu: `/zglos-pojazd`
 - Kontakt: `/kontakt`
-- Panel admina: `/admin`
+- Panel admina: `/backstage`
 
 ## Logika zgłoszeń
 
