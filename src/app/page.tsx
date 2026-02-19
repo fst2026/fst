@@ -32,7 +32,9 @@ const galleryImages = [
 ];
 
 function formatEventDate(isoDate: string): string {
+  if (!isoDate) return "Do ustalenia";
   const date = new Date(isoDate);
+  if (Number.isNaN(date.getTime())) return "Do ustalenia";
   return date.toLocaleDateString("pl-PL", {
     day: "numeric",
     month: "long",
@@ -42,6 +44,7 @@ function formatEventDate(isoDate: string): string {
 
 export default async function HomePage() {
   const settings = await getCachedSettings();
+  const parkingMapEmbedUrl = settings.parkingMapUrl || "https://www.google.com/maps?q=Gda%C5%84sk&output=embed";
 
   return (
     <Stack gap={3}>
@@ -56,9 +59,11 @@ export default async function HomePage() {
           <Link href="/zglos-pojazd" className="btn btn-primary">
             ZGŁOŚ POJAZD
           </Link>
-          <Button as="a" variant="outline-light" href={settings.facebookEventUrl} target="_blank" rel="noreferrer">
-            f Facebook event
-          </Button>
+          {settings.facebookEventUrl ? (
+            <Button as="a" variant="outline-light" href={settings.facebookEventUrl} target="_blank" rel="noreferrer">
+              f Facebook event
+            </Button>
+          ) : null}
         </div>
       </section>
 
@@ -99,7 +104,7 @@ export default async function HomePage() {
               <h2>Dojazd</h2>
               <iframe
                 title="Mapa dojazdu"
-                src="https://www.google.com/maps?q=Gdańsk&output=embed"
+                src={parkingMapEmbedUrl}
                 width="100%"
                 height="280"
                 style={{ border: 0, borderRadius: 12 }}

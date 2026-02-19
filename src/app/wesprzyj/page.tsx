@@ -32,6 +32,15 @@ export default async function SupportPage() {
             <br />
             {settings.associationAccountNumber}
           </p>
+          <p>
+            <strong>Dane do wpłaty:</strong>
+            <br />
+            Odbiorca: {settings.paymentRecipientName}
+            <br />
+            Konto: {settings.paymentBankAccount}
+            <br />
+            Termin: {settings.paymentDeadlineText}
+          </p>
         </CardBody>
       </Card>
     </Stack>
