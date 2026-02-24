@@ -216,7 +216,39 @@ const defaultSettings: SiteSettings = {
   paymentRecipientName: "Stowarzyszenie Fanatic Speed Team",
   paymentBankAccount: "00 0000 0000 0000 0000 0000 0000",
   paymentDeadlineText: "w ciągu 72 godzin od otrzymania tej wiadomości",
-  parkingMapUrl: "https://maps.google.com/?q=Gda%C5%84sk"
+  parkingMapUrl: "https://maps.google.com/?q=Gda%C5%84sk",
+  submissionsOpen: false,
+  submissionsClosedMessage: "Zgłoszenia są obecnie zamknięte. Śledź nasze social media, aby nie przegapić otwarcia zapisów!",
+  tshirtSizes: "XS,S,M,L,XL,XXL,XXXL",
+  emailTemplateReceived: `Cześć {{firstName}},
+
+Twoje zgłoszenie zostało przyjęte i oczekuje na rozpatrzenie.
+Po decyzji organizatora otrzymasz kolejną wiadomość.
+
+Pozdrawiamy,
+Fanatic Speed Team`,
+  emailTemplateAccepted: `Cześć {{firstName}},
+
+Twoje zgłoszenie zostało zaakceptowane.
+
+Kwota wpisowego: {{entryFeePln}} zł
+Termin płatności: {{paymentDeadlineText}}
+Odbiorca: {{paymentRecipientName}}
+Numer konta: {{paymentBankAccount}}
+
+Po opłaceniu wpisowego potwierdzimy finalnie udział.
+
+Pozdrawiamy,
+Fanatic Speed Team`,
+  emailTemplateRejected: `Cześć {{firstName}},
+
+Tym razem nie mogliśmy zaakceptować Twojego zgłoszenia pojazdu.
+Mimo to serdecznie zapraszamy Cię jako odwiedzającego na wydarzenie.
+
+{{parkingMapUrl}}
+
+Do zobaczenia,
+Fanatic Speed Team`
 };
 
 export async function getSettings(): Promise<SiteSettings> {

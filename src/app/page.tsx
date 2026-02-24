@@ -44,7 +44,7 @@ function formatEventDate(isoDate: string): string {
 
 export default async function HomePage() {
   const settings = await getCachedSettings();
-  const parkingMapEmbedUrl = settings.parkingMapUrl || "https://www.google.com/maps?q=Gda%C5%84sk&output=embed";
+  const parkingMapEmbedUrl = settings.parkingMapUrl || "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d301.31044246597634!2d18.52352320345179!3d50.58531670837844!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4710e0f2fe9df7db%3A0x90ff252c5bf2bbad!2sBoisko%20pi%C5%82karskie!5e0!3m2!1spl!2spl!4v1771529430941!5m2!1spl!2spl";
 
   return (
     <Stack gap={3}>
@@ -56,9 +56,20 @@ export default async function HomePage() {
           <strong>Miejsce:</strong> {settings.eventLocation}
         </p>
         <div className="d-flex gap-2 flex-wrap">
-          <Link href="/zglos-pojazd" className="btn btn-primary">
-            ZGŁOŚ POJAZD
-          </Link>
+          {settings.submissionsOpen ? (
+            <Link href="/zglos-pojazd" className="btn btn-primary">
+              ZGŁOŚ POJAZD
+            </Link>
+          ) : (
+            <span
+              className="btn btn-secondary disabled"
+              aria-disabled="true"
+              title="Zgłoszenia są obecnie zamknięte"
+              style={{ pointerEvents: "none", opacity: 0.65 }}
+            >
+              ZGŁOSZENIA ZAMKNIĘTE
+            </span>
+          )}
           {settings.facebookEventUrl ? (
             <Button as="a" variant="outline-light" href={settings.facebookEventUrl} target="_blank" rel="noreferrer">
               f Facebook event
@@ -82,7 +93,7 @@ export default async function HomePage() {
       <Card className="form-card shadow-sm border-0">
         <CardBody className="d-grid gap-3">
           <h2>Galeria poprzedniej edycji</h2>
-          <Gallery images={galleryImages} externalGalleryUrl="https://photos.google.com/share/AF1QipO5U9iMbBrmLaqkycOthIUNwlVSgLdesw7RSSgl-tWNmDOIVuImdGJumikpxg-SNA?key=Z3ZfQm5RVjRQbnJ2TDJseEdfX2RXT1ZnLUFYUDN3" />
+          <Gallery images={galleryImages} externalGalleryUrl="https://photos.app.goo.gl/XsdGBBe38Aq1AptN6" />
         </CardBody>
       </Card>
 

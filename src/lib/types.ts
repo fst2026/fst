@@ -55,4 +55,14 @@ export type SiteSettings = {
 
   // Mapy
   parkingMapUrl: string;
+
+  // Formularz zgłoszeniowy
+  submissionsOpen: boolean;
+  submissionsClosedMessage: string;
+  tshirtSizes: string; // comma-separated, e.g. "XS,S,M,L,XL,XXL"
+
+  // Szablony e-mail (placeholders: {{firstName}}, {{entryFeePln}}, {{paymentBankAccount}}, {{paymentDeadlineText}}, {{paymentRecipientName}}, {{parkingMapUrl}})
+  emailTemplateReceived: string;
+  emailTemplateAccepted: string;
+  emailTemplateRejected: string;
 };
