@@ -9,6 +9,14 @@ const buckets = new Map<string, Bucket>();
 
 function checkRateLimitMemory(key: string, limit: number, windowMs: number) {
   const now = Date.now();
+
+  // Prevent unbounded memory growth when DB fallback is active.
+  if (buckets.size > 5000) {
+    for (const [bucketKey, bucket] of buckets) {
+      if (bucket.resetAt < now) buckets.delete(bucketKey);
+    }
+  }
+
   const existing = buckets.get(key);
 
   if (!existing || now > existing.resetAt) {

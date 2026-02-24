@@ -5,6 +5,7 @@ import { getSubmissionById, updateSubmissionStatus } from "@/lib/db";
 import { sendSubmissionAcceptedEmail, sendSubmissionRejectedEmail } from "@/lib/email";
 import { isSameOrigin } from "@/lib/http-security";
 import { isAdminEmail } from "@/lib/admin-auth";
+import { isDevAuthBypassEnabled } from "@/lib/env";
 
 const schema = z.object({
   status: z.enum(["accepted", "rejected"])
@@ -15,8 +16,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 
+  const skipAuth = isDevAuthBypassEnabled();
   const session = await auth();
-  if (!isAdminEmail(session?.user?.email)) {
+  if (!skipAuth && !isAdminEmail(session?.user?.email)) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
