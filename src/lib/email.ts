@@ -1,5 +1,22 @@
 import { getSettings } from "@/lib/db";
-import { VehicleSubmission } from "@/lib/types";
+import { replaceTemplatePlaceholders, textToHtml } from "@/lib/email-template";
+import { SiteSettings, VehicleSubmission } from "@/lib/types";
+
+function getTemplateValues(
+  settings: SiteSettings,
+  submission: VehicleSubmission
+): Record<string, string | number> {
+  return {
+    firstName: submission.firstName,
+    entryFeePln: settings.entryFeePln,
+    paymentBankAccount: settings.paymentBankAccount,
+    paymentDeadlineText: settings.paymentDeadlineText,
+    paymentRecipientName: settings.paymentRecipientName,
+    parkingMapUrl: settings.parkingMapUrl
+      ? `Mapa parkingu: ${settings.parkingMapUrl}`
+      : ""
+  };
+}
 
 async function getTransporter() {
   const host = process.env.SMTP_HOST;
@@ -30,7 +47,7 @@ async function sendMail(input: {
   if (!transporter) return false;
 
   await transporter.sendMail({
-    from: process.env.MAIL_FROM ?? "no-reply@fanaticspeedteam.pl",
+    from: process.env.MAIL_FROM ?? "fanaticspeedteamost@gmail.com",
     to: input.to,
     subject: input.subject,
     text: input.text,
@@ -41,69 +58,30 @@ async function sendMail(input: {
 
 export async function sendSubmissionReceivedEmail(submission: VehicleSubmission) {
   const settings = await getSettings();
+  const values = getTemplateValues(settings, submission);
   const subject = `Potwierdzenie otrzymania zgłoszenia - ${settings.eventName}`;
-  const text =
-    `Cześć ${submission.firstName},\n\n` +
-    "Twoje zgłoszenie zostało przyjęte i oczekuje na rozpatrzenie.\n" +
-    "Po decyzji organizatora otrzymasz kolejną wiadomość.\n\n" +
-    "Pozdrawiamy,\nFanatic Speed Team";
-
-  const html = `<p>Cześć ${submission.firstName},</p>
-<p>Twoje zgłoszenie zostało przyjęte i <strong>oczekuje na rozpatrzenie</strong>.</p>
-<p>Po decyzji organizatora otrzymasz kolejną wiadomość.</p>
-<p>Pozdrawiamy,<br/>Fanatic Speed Team</p>`;
+  const text = replaceTemplatePlaceholders(settings.emailTemplateReceived, values);
+  const html = textToHtml(text);
 
   return sendMail({ to: submission.email, subject, text, html });
 }
 
 export async function sendSubmissionAcceptedEmail(submission: VehicleSubmission) {
   const settings = await getSettings();
-
+  const values = getTemplateValues(settings, submission);
   const subject = `Akceptacja zgłoszenia - ${settings.eventName}`;
-  const text =
-    `Cześć ${submission.firstName},\n\n` +
-    "Twoje zgłoszenie zostało zaakceptowane.\n\n" +
-    `Kwota wpisowego: ${settings.entryFeePln} zł\n` +
-    `Termin płatności: ${settings.paymentDeadlineText}\n` +
-    `Odbiorca: ${settings.paymentRecipientName}\n` +
-    `Numer konta: ${settings.paymentBankAccount}\n\n` +
-    "Po opłaceniu wpisowego potwierdzimy finalnie udział.\n\n" +
-    "Pozdrawiamy,\nFanatic Speed Team";
-
-  const html = `<p>Cześć ${submission.firstName},</p>
-<p>Twoje zgłoszenie zostało <strong>zaakceptowane</strong>.</p>
-<p><strong>Kwota wpisowego:</strong> ${settings.entryFeePln} zł<br/>
-<strong>Termin płatności:</strong> ${settings.paymentDeadlineText}<br/>
-<strong>Odbiorca:</strong> ${settings.paymentRecipientName}<br/>
-<strong>Numer konta:</strong> ${settings.paymentBankAccount}</p>
-<p>Po opłaceniu wpisowego potwierdzimy finalnie udział.</p>
-<p>Pozdrawiamy,<br/>Fanatic Speed Team</p>`;
+  const text = replaceTemplatePlaceholders(settings.emailTemplateAccepted, values);
+  const html = textToHtml(text);
 
   return sendMail({ to: submission.email, subject, text, html });
 }
 
 export async function sendSubmissionRejectedEmail(submission: VehicleSubmission) {
   const settings = await getSettings();
-  const parkingMapText = settings.parkingMapUrl
-    ? `Mapa parkingu: ${settings.parkingMapUrl}\n\n`
-    : "";
-  const parkingMapHtml = settings.parkingMapUrl
-    ? `<p><strong>Mapa parkingu:</strong> <a href="${settings.parkingMapUrl}" target="_blank" rel="noreferrer">${settings.parkingMapUrl}</a></p>`
-    : "";
-
+  const values = getTemplateValues(settings, submission);
   const subject = `Informacja o zgłoszeniu - ${settings.eventName}`;
-  const text =
-    `Cześć ${submission.firstName},\n\n` +
-    "Tym razem nie mogliśmy zaakceptować Twojego zgłoszenia pojazdu.\n" +
-    "Mimo to serdecznie zapraszamy Cię jako odwiedzającego na wydarzenie.\n" +
-    parkingMapText +
-    "Do zobaczenia,\nFanatic Speed Team";
-
-  const html = `<p>Cześć ${submission.firstName},</p>
-<p>Tym razem nie mogliśmy zaakceptować Twojego zgłoszenia pojazdu.</p>
-<p>Mimo to serdecznie zapraszamy Cię jako odwiedzającego na wydarzenie.</p>
-${parkingMapHtml}
-<p>Do zobaczenia,<br/>Fanatic Speed Team</p>`;
+  const text = replaceTemplatePlaceholders(settings.emailTemplateRejected, values);
+  const html = textToHtml(text);
 
   return sendMail({ to: submission.email, subject, text, html });
 }
