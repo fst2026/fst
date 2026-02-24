@@ -1,16 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { signOut } from "next-auth/react";
 import { useState } from "react";
 import { Alert, Badge, Button, Card, CardBody, Carousel, Modal, Stack } from "react-bootstrap";
-import { SiteSettings, VehicleSubmission } from "@/lib/types";
-import { AdminSettings } from "@/components/AdminSettings";
+import { VehicleSubmission } from "@/lib/types";
 
 type Props = {
   initialSubmissions: VehicleSubmission[];
-  initialSettings: SiteSettings;
-  canEditSettings: boolean;
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -27,12 +23,14 @@ function SubmissionCard({
   item,
   onAccept,
   onReject,
-  onOpenGallery
+  onOpenGallery,
+  busy
 }: {
   item: VehicleSubmission;
   onAccept: () => void;
   onReject: () => void;
   onOpenGallery: (index: number) => void;
+  busy: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -106,10 +104,10 @@ function SubmissionCard({
 
         {item.status === "pending" && (
           <div className="admin-card-actions">
-            <Button size="sm" onClick={onAccept} className="admin-card-btn-accept">
-              Akceptuj
+            <Button size="sm" onClick={onAccept} className="admin-card-btn-accept" disabled={busy}>
+              {busy ? "Zapisywanie..." : "Akceptuj"}
             </Button>
-            <Button size="sm" variant="outline-light" onClick={onReject}>
+            <Button size="sm" variant="outline-light" onClick={onReject} disabled={busy}>
               Odrzuć
             </Button>
           </div>
@@ -123,12 +121,14 @@ function SubmissionRow({
   item,
   onAccept,
   onReject,
-  onOpenGallery
+  onOpenGallery,
+  busy
 }: {
   item: VehicleSubmission;
   onAccept: () => void;
   onReject: () => void;
   onOpenGallery: (index: number) => void;
+  busy: boolean;
 }) {
   return (
     <tr>
@@ -180,10 +180,10 @@ function SubmissionRow({
       <td className="admin-actions-cell">
         {item.status === "pending" ? (
           <div className="admin-actions">
-            <Button size="sm" onClick={onAccept}>
-              Akceptuj
+            <Button size="sm" onClick={onAccept} disabled={busy}>
+              {busy ? "Zapisywanie..." : "Akceptuj"}
             </Button>
-            <Button size="sm" variant="outline-light" onClick={onReject}>
+            <Button size="sm" variant="outline-light" onClick={onReject} disabled={busy}>
               Odrzuć
             </Button>
           </div>
@@ -195,15 +195,16 @@ function SubmissionRow({
   );
 }
 
-export function AdminDashboard({ initialSubmissions, initialSettings, canEditSettings }: Props) {
+export function AdminSubmissions({ initialSubmissions }: Props) {
   const [submissions, setSubmissions] = useState(initialSubmissions);
   const [message, setMessage] = useState("");
+  const [messageVariant, setMessageVariant] = useState<"success" | "danger">("success");
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [galleryPhotos, setGalleryPhotos] = useState<string[]>([]);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [galleryTitle, setGalleryTitle] = useState("");
   const [showGallery, setShowGallery] = useState(false);
   const [filter, setFilter] = useState<"all" | "pending" | "accepted" | "rejected">("all");
-  const [activeTab, setActiveTab] = useState<"submissions" | "settings">("submissions");
 
   const filteredSubmissions = filter === "all" ? submissions : submissions.filter((s) => s.status === filter);
 
@@ -215,6 +216,9 @@ export function AdminDashboard({ initialSubmissions, initialSettings, canEditSet
   };
 
   async function changeStatus(id: string, status: "accepted" | "rejected") {
+    if (updatingId) return;
+    setUpdatingId(id);
+
     const res = await fetch(`/api/submissions/${id}/status`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -222,17 +226,17 @@ export function AdminDashboard({ initialSubmissions, initialSettings, canEditSet
     });
 
     if (!res.ok) {
+      setMessageVariant("danger");
       setMessage("Nie udało się zaktualizować zgłoszenia.");
+      setUpdatingId(null);
       return;
     }
 
     setSubmissions((prev) => prev.map((item) => (item.id === id ? { ...item, status } : item)));
+    setMessageVariant("success");
     setMessage("Status został zaktualizowany.");
+    setUpdatingId(null);
     setTimeout(() => setMessage(""), 3000);
-  }
-
-  async function logout() {
-    await signOut({ callbackUrl: "/backstage" });
   }
 
   function openGallery(item: VehicleSubmission, startIndex = 0) {
@@ -252,111 +256,73 @@ export function AdminDashboard({ initialSubmissions, initialSettings, canEditSet
 
   return (
     <Stack gap={3} className="admin-stack">
-      {/* Toolbar */}
-      <Card className="form-card shadow-sm border-0 admin-toolbar">
-        <CardBody className="admin-toolbar-body">
-          <div className="admin-tabs">
-            <button
-              type="button"
-              className={`admin-tab ${activeTab === "submissions" ? "active" : ""}`}
-              onClick={() => setActiveTab("submissions")}
-            >
-              Zgłoszenia
-            </button>
-            {canEditSettings && (
-              <button
-                type="button"
-                className={`admin-tab ${activeTab === "settings" ? "active" : ""}`}
-                onClick={() => setActiveTab("settings")}
-              >
-                Ustawienia
-              </button>
-            )}
-          </div>
-          <div className="admin-toolbar-actions">
-            {activeTab === "submissions" && (
-              <Button variant="outline-light" size="sm" as="a" href="/api/submissions/export">
-                Eksport CSV
-              </Button>
-            )}
-            <Button variant="outline-light" size="sm" onClick={logout}>
-              Wyloguj
-            </Button>
-          </div>
+      {/* Filters */}
+      <div className="admin-filters">
+        <button type="button" className={`admin-filter ${filter === "all" ? "active" : ""}`} onClick={() => setFilter("all")}>
+          Wszystkie <span className="admin-filter-count">{counts.all}</span>
+        </button>
+        <button type="button" className={`admin-filter ${filter === "pending" ? "active" : ""}`} onClick={() => setFilter("pending")}>
+          Oczekujące <span className="admin-filter-count">{counts.pending}</span>
+        </button>
+        <button type="button" className={`admin-filter ${filter === "accepted" ? "active" : ""}`} onClick={() => setFilter("accepted")}>
+          Zaakceptowane <span className="admin-filter-count">{counts.accepted}</span>
+        </button>
+        <button type="button" className={`admin-filter ${filter === "rejected" ? "active" : ""}`} onClick={() => setFilter("rejected")}>
+          Odrzucone <span className="admin-filter-count">{counts.rejected}</span>
+        </button>
+      </div>
+
+      {message && (
+        <Alert variant={messageVariant} className="admin-alert">
+          {message}
+        </Alert>
+      )}
+
+      {/* Mobile: Cards */}
+      <div className="admin-cards">
+        {filteredSubmissions.map((item) => (
+          <SubmissionCard
+            key={item.id}
+            item={item}
+            onAccept={() => changeStatus(item.id, "accepted")}
+            onReject={() => changeStatus(item.id, "rejected")}
+            onOpenGallery={(index) => openGallery(item, index)}
+            busy={updatingId === item.id}
+          />
+        ))}
+        {filteredSubmissions.length === 0 && <p className="admin-empty">Brak zgłoszeń w tej kategorii.</p>}
+      </div>
+
+      {/* Desktop: Table */}
+      <Card className="form-card shadow-sm border-0 admin-table-wrapper">
+        <CardBody className="admin-table-card-body">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Pojazd</th>
+                <th>Zgłaszający</th>
+                <th>Zdjęcia</th>
+                <th>Status</th>
+                <th>Akcje</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredSubmissions.map((item) => (
+                <SubmissionRow
+                  key={item.id}
+                  item={item}
+                  onAccept={() => changeStatus(item.id, "accepted")}
+                  onReject={() => changeStatus(item.id, "rejected")}
+                  onOpenGallery={(index) => openGallery(item, index)}
+                  busy={updatingId === item.id}
+                />
+              ))}
+            </tbody>
+          </table>
+          {filteredSubmissions.length === 0 && <p className="admin-empty">Brak zgłoszeń w tej kategorii.</p>}
         </CardBody>
       </Card>
-
-      {activeTab === "settings" && canEditSettings && <AdminSettings initialSettings={initialSettings} />}
-
-      {activeTab === "submissions" && (
-        <>
-          {/* Filters */}
-          <div className="admin-filters">
-            <button type="button" className={`admin-filter ${filter === "all" ? "active" : ""}`} onClick={() => setFilter("all")}>
-              Wszystkie <span className="admin-filter-count">{counts.all}</span>
-            </button>
-            <button type="button" className={`admin-filter ${filter === "pending" ? "active" : ""}`} onClick={() => setFilter("pending")}>
-              Oczekujące <span className="admin-filter-count">{counts.pending}</span>
-            </button>
-            <button type="button" className={`admin-filter ${filter === "accepted" ? "active" : ""}`} onClick={() => setFilter("accepted")}>
-              Zaakceptowane <span className="admin-filter-count">{counts.accepted}</span>
-            </button>
-            <button type="button" className={`admin-filter ${filter === "rejected" ? "active" : ""}`} onClick={() => setFilter("rejected")}>
-              Odrzucone <span className="admin-filter-count">{counts.rejected}</span>
-            </button>
-          </div>
-
-          {message && (
-            <Alert variant="success" className="admin-alert">
-              {message}
-            </Alert>
-          )}
-
-          {/* Mobile: Cards */}
-          <div className="admin-cards">
-            {filteredSubmissions.map((item) => (
-              <SubmissionCard
-                key={item.id}
-                item={item}
-                onAccept={() => changeStatus(item.id, "accepted")}
-                onReject={() => changeStatus(item.id, "rejected")}
-                onOpenGallery={(index) => openGallery(item, index)}
-              />
-            ))}
-            {filteredSubmissions.length === 0 && <p className="admin-empty">Brak zgłoszeń w tej kategorii.</p>}
-          </div>
-
-          {/* Desktop: Table */}
-          <Card className="form-card shadow-sm border-0 admin-table-wrapper">
-            <CardBody className="admin-table-card-body">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Data</th>
-                    <th>Pojazd</th>
-                    <th>Zgłaszający</th>
-                    <th>Zdjęcia</th>
-                    <th>Status</th>
-                    <th>Akcje</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredSubmissions.map((item) => (
-                    <SubmissionRow
-                      key={item.id}
-                      item={item}
-                      onAccept={() => changeStatus(item.id, "accepted")}
-                      onReject={() => changeStatus(item.id, "rejected")}
-                      onOpenGallery={(index) => openGallery(item, index)}
-                    />
-                  ))}
-                </tbody>
-              </table>
-              {filteredSubmissions.length === 0 && <p className="admin-empty">Brak zgłoszeń w tej kategorii.</p>}
-            </CardBody>
-          </Card>
-        </>
-      )}
 
       {/* Gallery Modal */}
       <Modal show={showGallery} onHide={closeGallery} centered size="lg" className="admin-gallery-modal">

@@ -16,7 +16,8 @@ import {
   FormText,
   Row
 } from "react-bootstrap";
-import { MAX_PHOTOS, MAX_PHOTO_SIZE_BYTES, MIN_PHOTOS, TSHIRT_SIZES } from "@/lib/constants";
+import { MAX_PHOTOS, MAX_PHOTO_SIZE_BYTES, MIN_PHOTOS } from "@/lib/constants";
+import { validateRegistrationNumber } from "@/lib/form-validation";
 
 const CURRENT_YEAR = new Date().getFullYear();
 const MIN_YEAR = 1900;
@@ -45,12 +46,7 @@ function validatePhone(value: string): string | undefined {
 }
 
 function validateRegistration(value: string): string | undefined {
-  if (!value) return "Numer rejestracyjny jest wymagany";
-  const cleaned = value.trim().toUpperCase();
-  if (cleaned.length < 4) return "Numer rejestracyjny jest za krótki";
-  if (cleaned.length > 8) return "Numer rejestracyjny jest za długi";
-  if (!/^[A-Z0-9 ]+$/.test(cleaned)) return "Dozwolone tylko litery i cyfry";
-  return undefined;
+  return validateRegistrationNumber(value);
 }
 
 function validateInstagram(value: string): string | undefined {
@@ -66,7 +62,12 @@ function validateInstagram(value: string): string | undefined {
   return undefined;
 }
 
-export function SubmissionForm() {
+type SubmissionFormProps = {
+  entryFeePln: number;
+  tshirtSizes: string[];
+};
+
+export function SubmissionForm({ entryFeePln, tshirtSizes }: SubmissionFormProps) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
@@ -233,7 +234,7 @@ export function SubmissionForm() {
         <Form onSubmit={onSubmit} className="d-grid gap-3" noValidate>
           <h2>Formularz zgłoszeniowy</h2>
           <p className="mb-0 text-body-secondary">
-            Zgłoszenia podlegają weryfikacji. Po akceptacji należy uiścić opłatę wpisową 150 zł. Na wjeździe uczestnik
+            Zgłoszenia podlegają weryfikacji. Po akceptacji należy uiścić opłatę wpisową {entryFeePln} zł. Na wjeździe uczestnik
             otrzymuje pakiet powitalny (koszulka + gadżety).
           </p>
 
@@ -412,8 +413,8 @@ export function SubmissionForm() {
             <Col md={6}>
               <FormGroup controlId="tshirtSize">
                 <FormLabel>Rozmiar koszulki</FormLabel>
-                <FormSelect name="tshirtSize" defaultValue={TSHIRT_SIZES[2]} required>
-                  {TSHIRT_SIZES.map((size) => (
+                <FormSelect name="tshirtSize" defaultValue={tshirtSizes[2] ?? tshirtSizes[0]} required>
+                  {tshirtSizes.map((size) => (
                     <option key={size} value={size}>
                       {size}
                     </option>

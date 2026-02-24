@@ -22,7 +22,7 @@ export default function ExhibitorPage() {
             <li>Promocja marki podczas eventu i w kanałach social media.</li>
             <li>Przekazanie gadżetów promocyjnych do pakietów startowych.</li>
           </ul>
-          <Button as="a" href="mailto:fanaticspeedteam.wspolpraca@gmail.com" className="align-self-start">
+          <Button as="a" href="mailto:kontakt.fanaticspeedteam@gmail.com" className="align-self-start">
             Nawiąż współpracę
           </Button>
         </CardBody>

@@ -2,13 +2,16 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { isSuperAdminEmail } from "@/lib/admin-auth";
+import { canAccessSettings } from "@/lib/authz";
+import { isDevAuthBypassEnabled } from "@/lib/env";
 import { isSameOrigin } from "@/lib/http-security";
 import { getCachedSettings, updateSettingsWithRevalidate } from "@/lib/settings";
+import { isHttpsUrl } from "@/lib/url-security";
 
-// Only allow https:// URLs (blocks javascript:, data:, etc.)
+// Only allow https:// URLs (blocks javascript:, data:, mixed-content links).
 const safeUrlSchema = z.string().url().refine(
-  (url) => url.startsWith("https://") || url.startsWith("http://"),
-  "URL musi zaczynać się od https:// lub http://"
+  (url) => isHttpsUrl(url),
+  "URL musi zaczynać się od https://"
 ).or(z.literal(""));
 
 const eventDateSchema = z
@@ -36,10 +39,23 @@ const settingsSchema = z.object({
   paymentRecipientName: z.string().min(1).max(200).optional(),
   paymentBankAccount: z.string().min(1).max(50).optional(),
   paymentDeadlineText: z.string().min(1).max(200).optional(),
-  parkingMapUrl: safeUrlSchema.optional()
+  parkingMapUrl: safeUrlSchema.optional(),
+  submissionsOpen: z.boolean().optional(),
+  submissionsClosedMessage: z.string().max(500).optional(),
+  tshirtSizes: z.string().min(1).max(200).optional(),
+  emailTemplateReceived: z.string().max(5000).optional(),
+  emailTemplateAccepted: z.string().max(5000).optional(),
+  emailTemplateRejected: z.string().max(5000).optional()
 });
 
 export async function GET() {
+  const skipAuth = isDevAuthBypassEnabled();
+  const session = await auth();
+  const isSuperAdmin = isSuperAdminEmail(session?.user?.email);
+  if (!canAccessSettings({ skipAuth, isSuperAdmin })) {
+    return NextResponse.json({ error: "Unauthorized - super admin required" }, { status: 401 });
+  }
+
   const settings = await getCachedSettings();
   return NextResponse.json(settings);
 }
@@ -49,8 +65,10 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  const skipAuth = isDevAuthBypassEnabled();
   const session = await auth();
-  if (!isSuperAdminEmail(session?.user?.email)) {
+  const isSuperAdmin = isSuperAdminEmail(session?.user?.email);
+  if (!canAccessSettings({ skipAuth, isSuperAdmin })) {
     return NextResponse.json({ error: "Unauthorized - super admin required" }, { status: 401 });
   }
 

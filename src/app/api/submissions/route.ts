@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { MAX_PHOTOS, MAX_PHOTO_SIZE_BYTES, MIN_PHOTOS } from "@/lib/constants";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { createSubmission } from "@/lib/db";
+import { createSubmission, getSettings } from "@/lib/db";
 import { sendSubmissionReceivedEmail } from "@/lib/email";
 import { isSameOrigin } from "@/lib/http-security";
 import { normalizeUploadedImage, uploadImageFile } from "@/lib/storage";
@@ -88,6 +88,11 @@ function validatePhotos(photos: File[]) {
 export async function POST(request: Request) {
   if (!isSameOrigin(request)) {
     return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
+  const settings = await getSettings();
+  if (!settings.submissionsOpen) {
+    return NextResponse.json({ message: "Zgłoszenia są obecnie zamknięte." }, { status: 403 });
   }
 
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";

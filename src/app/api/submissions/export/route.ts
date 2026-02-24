@@ -3,10 +3,12 @@ import { auth } from "@/auth";
 import { toSubmissionCsv } from "@/lib/csv";
 import { getSubmissions } from "@/lib/db";
 import { isAdminEmail } from "@/lib/admin-auth";
+import { isDevAuthBypassEnabled } from "@/lib/env";
 
 export async function GET() {
+  const skipAuth = isDevAuthBypassEnabled();
   const session = await auth();
-  if (!isAdminEmail(session?.user?.email)) {
+  if (!skipAuth && !isAdminEmail(session?.user?.email)) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { auth, authConfigurationIssue, isOAuthConfigured } from "@/auth";
 import { isAdminEmail } from "@/lib/admin-auth";
+import { isDevAuthBypassEnabled } from "@/lib/env";
 
 function isProtectedPath(pathname: string) {
   return pathname === "/backstage" || pathname.startsWith("/backstage/") || pathname.startsWith("/api/submissions/export") || (pathname.startsWith("/api/submissions/") && pathname.endsWith("/status")) || (pathname === "/api/settings" && true);
@@ -17,6 +18,11 @@ type RequestWithAuth = NextRequest & {
 
 export default auth((request: RequestWithAuth) => {
   if (!isProtectedPath(request.nextUrl.pathname)) {
+    return NextResponse.next();
+  }
+
+  // DEV/TEST only: skip auth entirely when explicitly enabled.
+  if (isDevAuthBypassEnabled()) {
     return NextResponse.next();
   }
 
