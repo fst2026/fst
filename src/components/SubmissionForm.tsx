@@ -17,7 +17,7 @@ import {
   Row
 } from "react-bootstrap";
 import imageCompression from "browser-image-compression";
-import { MAX_PHOTOS, MAX_PHOTO_SIZE_BYTES, MIN_PHOTOS } from "@/lib/constants";
+import { MAX_PHOTOS, MIN_PHOTOS } from "@/lib/constants";
 import { validateRegistrationNumber } from "@/lib/form-validation";
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -72,7 +72,6 @@ export function SubmissionForm({ entryFeePln, tshirtSizes }: SubmissionFormProps
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
-  const [compressing, setCompressing] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -113,7 +112,7 @@ export function SubmissionForm({ entryFeePln, tshirtSizes }: SubmissionFormProps
     validateField(field, value);
   }
 
-  async function onPickPhotos(event: ChangeEvent<HTMLInputElement>) {
+  function onPickPhotos(event: ChangeEvent<HTMLInputElement>) {
     const input = event.currentTarget;
     const incoming = Array.from(input.files ?? []);
     if (!incoming.length) return;
@@ -125,54 +124,17 @@ export function SubmissionForm({ entryFeePln, tshirtSizes }: SubmissionFormProps
     }
 
     setError("");
-    setCompressing(true);
 
-    try {
-      const compressionOptions = {
-        maxSizeMB: 0.7, // compress to max 0.7MB per photo (5 photos × 0.7MB = 3.5MB + overhead < 4.5MB Vercel limit)
-        maxWidthOrHeight: 1920,
-        useWebWorker: true,
-        fileType: "image/jpeg" as const
-      };
-
-      const compressed = await Promise.all(
-        incoming.map(async (file) => {
-          try {
-            const result = await imageCompression(file, compressionOptions);
-            // Preserve original name but ensure .jpg extension
-            const newName = file.name.replace(/\.(png|webp|jpeg|jpg)$/i, ".jpg");
-            return new File([result], newName, { type: "image/jpeg" });
-          } catch (err) {
-            console.error(`Failed to compress ${file.name}:`, err);
-            return null;
-          }
-        })
+    const next = [...selectedFiles];
+    for (const file of incoming) {
+      const exists = next.some(
+        (item) => item.name === file.name && item.size === file.size && item.lastModified === file.lastModified
       );
-
-      const valid = compressed.filter((f): f is File => f !== null);
-      if (valid.length !== incoming.length) {
-        setError("Niektóre zdjęcia nie mogły zostać przetworzone. Spróbuj inne pliki.");
-        input.value = "";
-        setCompressing(false);
-        return;
-      }
-
-      const next = [...selectedFiles];
-      for (const file of valid) {
-        const exists = next.some(
-          (item) => item.name === file.name && item.size === file.size
-        );
-        if (!exists) next.push(file);
-      }
-
-      setSelectedFiles(next);
-    } catch (err) {
-      console.error("Compression error:", err);
-      setError("Błąd podczas przetwarzania zdjęć. Spróbuj ponownie.");
-    } finally {
-      input.value = "";
-      setCompressing(false);
+      if (!exists) next.push(file);
     }
+
+    setSelectedFiles(next);
+    input.value = "";
   }
 
   function removePhoto(index: number) {
@@ -225,23 +187,56 @@ export function SubmissionForm({ entryFeePln, tshirtSizes }: SubmissionFormProps
       return;
     }
 
+    setLoading(true);
+
+    // Compress photos before upload
+    let compressedFiles: File[];
+    try {
+      const compressionOptions = {
+        maxSizeMB: 0.7,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+        fileType: "image/jpeg" as const
+      };
+
+      const compressed = await Promise.all(
+        files.map(async (file) => {
+          try {
+            const result = await imageCompression(file, compressionOptions);
+            const newName = file.name.replace(/\.(png|webp|jpeg|jpg)$/i, ".jpg");
+            return new File([result], newName, { type: "image/jpeg" });
+          } catch (err) {
+            console.error(`Failed to compress ${file.name}:`, err);
+            return null;
+          }
+        })
+      );
+
+      const valid = compressed.filter((f): f is File => f !== null);
+      if (valid.length !== files.length) {
+        setError("Nie udało się przetworzyć niektórych zdjęć. Spróbuj ponownie.");
+        setLoading(false);
+        return;
+      }
+
+      compressedFiles = valid;
+    } catch (err) {
+      console.error("Compression error:", err);
+      setError("Błąd podczas przetwarzania zdjęć. Spróbuj ponownie.");
+      setLoading(false);
+      return;
+    }
+
     // Safety check: verify total payload size is under Vercel limit
-    const totalPhotoSize = files.reduce((sum, file) => sum + file.size, 0);
-    const maxSafeSize = 4 * 1024 * 1024; // 4MB safe limit (Vercel is 4.5MB, leave margin for FormData overhead)
+    const totalPhotoSize = compressedFiles.reduce((sum, file) => sum + file.size, 0);
+    const maxSafeSize = 4 * 1024 * 1024;
     if (totalPhotoSize > maxSafeSize) {
       setError(
-        `Zdjęcia są za duże (${Math.ceil(totalPhotoSize / 1024 / 1024)} MB). Usuń niektóre zdjęcia lub spróbuj ponownie.`
+        `Zdjęcia są za duże (${Math.ceil(totalPhotoSize / 1024 / 1024)} MB). Spróbuj ponownie lub usuń niektóre zdjęcia.`
       );
+      setLoading(false);
       return;
     }
-
-    const tooLarge = files.find((file) => file.size > MAX_PHOTO_SIZE_BYTES);
-    if (tooLarge) {
-      setError(`Nie udało się przetworzyć pliku "${tooLarge.name}". Spróbuj inne zdjęcie.`);
-      return;
-    }
-
-    setLoading(true);
 
     // Normalize registration number
     const normalizedRegistration = registrationNumber.trim().toUpperCase().replace(/\s+/g, " ");
@@ -254,7 +249,7 @@ export function SubmissionForm({ entryFeePln, tshirtSizes }: SubmissionFormProps
         payload.append(key, value);
       }
     }
-    for (const file of files) payload.append("photos", file);
+    for (const file of compressedFiles) payload.append("photos", file);
 
     try {
       const res = await fetch("/api/submissions", {
@@ -361,15 +356,15 @@ export function SubmissionForm({ entryFeePln, tshirtSizes }: SubmissionFormProps
                     type="button"
                     variant="outline-light"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={loading || compressing}
+                    disabled={loading}
                   >
-                    {compressing ? "Przetwarzanie..." : "Dodaj zdjęcia"}
+                    Dodaj zdjęcia
                   </Button>
                   <Button
                     type="button"
                     variant="outline-light"
                     onClick={clearPhotos}
-                    disabled={!selectedFiles.length || loading || compressing}
+                    disabled={!selectedFiles.length || loading}
                   >
                     Wyczyść
                   </Button>
@@ -485,7 +480,7 @@ export function SubmissionForm({ entryFeePln, tshirtSizes }: SubmissionFormProps
           />
 
           <Button type="submit" disabled={loading} className="fw-semibold">
-            {loading ? "Wysyłanie..." : "Wyślij zgłoszenie"}
+            {loading ? "Przetwarzanie i wysyłanie..." : "Wyślij zgłoszenie"}
           </Button>
 
           {error && <Alert variant="danger">{error}</Alert>}
