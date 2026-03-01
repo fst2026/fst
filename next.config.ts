@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@aws-sdk/client-s3"],
   // R2 credentials are read server-side only via process.env directly
   async headers() {
+    // Skip security headers in development to allow testing from mobile devices
+    if (process.env.NODE_ENV === "development") {
+      return [];
+    }
+
     return [
       {
         source: "/(.*)",
